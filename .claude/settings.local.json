@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write",
+      "Bash(*)",
+      "Bash(npx --yes create-expo-app@latest specradar-mobile --template default --no-install)"
+    ]
+  }
+}
