@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(.\\\\node_modules\\\\.bin\\\\tsc --noEmit 2>&1)",
+      "Bash(cd \"/d/Trabalhos]/Sprint_Mobile/specradar-mobile\")",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npm start *)"
+    ]
+  }
+}
