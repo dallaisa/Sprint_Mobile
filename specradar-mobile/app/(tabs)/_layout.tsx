@@ -1,13 +1,26 @@
-import { Tabs } from 'expo-router';
-import { Platform } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { Platform, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { Colors } from '@/src/theme/colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { clearToken } from '@/src/storage/auth';
 
 export default function TabLayout() {
+  const router = useRouter();
+
+  async function handleLogout() {
+    await clearToken();
+    router.replace('/login');
+  }
+
   return (
     <Tabs
       initialRouteName="chat"
       screenOptions={{
+        headerRight: () => (
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <Text style={styles.logoutTexto}>Sair</Text>
+          </TouchableOpacity>
+        ),
         tabBarActiveTintColor: Colors.fordBlue,
         tabBarInactiveTintColor: Colors.textSecondary,
         tabBarStyle: {
@@ -64,3 +77,8 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  logoutBtn: { marginRight: 16, paddingVertical: 4, paddingHorizontal: 8 },
+  logoutTexto: { color: '#fff', fontSize: 14, fontWeight: '600' },
+});
