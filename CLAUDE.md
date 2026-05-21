@@ -71,26 +71,48 @@ Challenge/
 
 ## Status das fases
 
-### ✅ Fase 1 — Setup (concluída)
-- Projeto Expo criado e migrado para SDK 55 (emulador do Pedro é 55)
-- 4 rotas tab criadas como placeholders
-- Camada de tipos + API client com mock da Ranger Raptor
-- Ícones SF Symbols mapeados para Material Icons
-- Hooks de color scheme normalizados (RN 0.83 introduziu `'unspecified'` em `ColorSchemeName`)
+### ✅ Fase 0 — Inicialização do projeto (concluída em 2026-05-17)
+- Projeto Expo criado com `create-expo-app` (template blank-typescript)
+- Atualizado para **Expo SDK 55** (55.0.24) + React Native 0.81.5
+- `expo-router ~55.0.14`, `@react-native-async-storage/async-storage 2.2.0`, `@expo/vector-icons` instalados
+- `package.json` → `main: "expo-router/entry"`
+- `app.json` → `scheme: "specradar"`, `userInterfaceStyle: "automatic"`, nome "SpecRadar"
+- `tsconfig.json` → `paths: { "@/*": ["./*"] }` para imports absolutos
+- Boilerplate removido (`App.tsx`, `index.ts`, `AGENTS.md`)
+- Estrutura de pastas criada: `app/(tabs)/`, `app/ficha/`, `src/api/mocks/`, `src/components/`, `src/hooks/`, `src/storage/`, `src/theme/`, `src/types/`
 
-### ✅ Fase 2 — Chat + Formulário (concluída)
-- Componentes: `SpecCard`, `ConfidenceBadge`, `LoadingSpinner`, `ErrorMessage`
-- Hook `useSpecQuery` com loading/error/data + auto-save no AsyncStorage
-- Tela **Chat**: input livre, parser simples (1ª palavra=marca, próximas=modelo)
-- Tela **Formulário**: campos validados (regex marca, 2-80 chars modelo/versão, 1-20 atributos), chips de atributos
-- Botão **Exportar CSV** funcional (Share API)
-- Tratamento de erro 404/422/503/401 com mensagens amigáveis e retry
+### ✅ Fase 1 — Setup (concluída em 2026-05-17)
+- `src/types/spec.ts` — tipos `SpecQuery`, `SpecResponse`, `SpecField`, `Confidence`, `ApiError`
+- `src/theme/colors.ts` — paleta Ford + `ATRIBUTOS_PADRAO`
+- `src/api/client.ts` — fetch wrapper, timeout 15s via AbortController, toggle mock automático (`EXPO_PUBLIC_API_BASE_URL` vazio = mock)
+- `src/api/mocks/ranger-raptor.ts` — mock completo com 13 atributos, confidence, fonte e verificado_em
+- `src/storage/history.ts` — AsyncStorage, máx 10, dedupe por id
+- `src/hooks/useSpecQuery.ts` — loading/error/data + auto-save no histórico
+- `app/_layout.tsx` — Stack root com rota `ficha/[id]`
+- `app/(tabs)/_layout.tsx` — 4 tabs com ícones MaterialIcons, initialRouteName="chat"
+- `app/(tabs)/chat.tsx` — consulta por texto livre (parser: 1ª palavra=marca, resto=modelo), ficha inline
+- `app/(tabs)/formulario.tsx` — campos validados (regex marca, 2-80 chars modelo/versão), chips de atributos, ficha inline
+- `app/(tabs)/historico.tsx` — placeholder (Fase 3)
+- `app/(tabs)/comparar.tsx` — placeholder (Fase 3)
+- `app/ficha/[id].tsx` — rota dinâmica, placeholder (Fase 3)
+- `hooks/use-color-scheme.ts` + `.web.ts` — normaliza `'unspecified'` do RN 0.83 → `'light' | 'dark'`
+- `components/ui/icon-symbol.tsx` — mapeia SF Symbols → MaterialIcons
+- **TypeScript: 0 erros** em todos os arquivos
 
-### ⏳ Fase 3 — Comparação + Histórico (próxima)
-- Tela **Histórico**: lista os ≤10 do AsyncStorage, offline-first, botão "Comparar com…"
-- Tela **Comparar**: seleciona 2 do histórico → `CompareTable` com células **verdes para o vencedor por atributo**
-- Rota dinâmica `app/ficha/[id].tsx` para abrir uma ficha do histórico
-- Estados vazios ("Nenhuma consulta ainda")
+> ⚠️ **npm install:** usar `--legacy-peer-deps` se houver conflito (react-dom vs react 19.1.0)
+
+### ✅ Fase 2 — Componentes reutilizáveis (concluída em 2026-05-18)
+- `src/components/ConfidenceBadge.tsx` — badge verde/laranja/cinza por nível de confiança
+- `src/components/LoadingSpinner.tsx` — spinner com mensagem durante fetch
+- `src/components/ErrorMessage.tsx` — caixa de erro em PT-BR + botão "Tentar novamente"
+- `src/components/SpecCard.tsx` — ficha técnica completa + botão **Exportar CSV** (Share API nativa)
+- `chat.tsx` e `formulario.tsx` já usam os componentes
+
+### ✅ Fase 3 — Comparação + Histórico (concluída em 2026-05-18)
+- `app/(tabs)/historico.tsx` — lista ≤10 do AsyncStorage, `useFocusEffect` p/ recarregar, seleção de 2 para comparar, estado vazio
+- `app/(tabs)/comparar.tsx` — tabela lado a lado, células verdes para vencedor por atributo (lógica: maior é melhor para potencia/torque/consumo/carga; menor é melhor para peso/preço), estado vazio
+- `app/ficha/[id].tsx` — rota dinâmica carrega spec do histórico, exibe `SpecCard`
+- **Fluxo de comparação:** Histórico → toque "Comparar" no 1º veículo (marca azul "✓ 1º") → toque em outro → navega para aba Comparar com params `v1` e `v2`
 
 ### ⏳ Fase 4 — Integração real + Polish
 - Trocar mock pela API real (mudar `EXPO_PUBLIC_API_BASE_URL` no `.env`)
@@ -164,15 +186,15 @@ Mitigação: mock cobre Fases 1–3 sem dependência externa.
 ## Checklist do brief (frente Mobile)
 
 - [x] React Native + Expo Router explícitos
-- [x] 4 tabs como rotas do Expo Router
-- [x] `useState` para `data/loading/error` em cada tela de consulta
-- [x] Loading spinner durante chamada
-- [x] Mensagem de erro amigável (404, timeout, etc)
-- [x] Timeout 15s com feedback
-- [x] AsyncStorage com últimas 10 (diferencial avaliativo)
-- [ ] Tela offline funcionando — falta implementar UI do histórico (Fase 3)
-- [ ] Tela comparação lado a lado com células verdes — Fase 3
-- [x] Indicador visual de confidence (verde/laranja/cinza)
-- [x] Botão exportar CSV
-- [x] Validação de input no formulário (estilo Pydantic)
+- [x] 4 tabs como rotas do Expo Router (com ícones MaterialIcons)
+- [x] `useState` para `data/loading/error` em cada tela de consulta (`useSpecQuery`)
+- [x] Loading spinner durante chamada (inline em chat.tsx e formulario.tsx; componente dedicado na Fase 2)
+- [x] Mensagem de erro amigável (404, timeout, etc) — inline; componente `ErrorMessage` na Fase 2
+- [x] Timeout 15s com feedback (AbortController em `client.ts`)
+- [x] AsyncStorage com últimas 10 (diferencial avaliativo — `storage/history.ts` + auto-save no hook)
+- [x] Tela offline funcionando — UI do histórico (Fase 3)
+- [x] Tela comparação lado a lado com células verdes — Fase 3
+- [x] Indicador visual de confidence (verde/laranja/cinza) — inline; `ConfidenceBadge` na Fase 2
+- [x] Botão exportar CSV — `SpecCard` na Fase 2 (Share API)
+- [x] Validação de input no formulário (regex marca, 2-80 chars modelo/versão, chips atributos)
 - [ ] App testado em iOS **e** Android — Fase 4

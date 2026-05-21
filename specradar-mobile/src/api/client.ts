@@ -1,5 +1,8 @@
 import { SpecQuery, SpecResponse, ApiError } from '@/src/types/spec';
+import { TokenResponse, RegisterRequest } from '@/src/types/auth';
 import { rangerRaptorMock } from './mocks/ranger-raptor';
+import { mockLogin, mockRegister } from './mocks/auth';
+import { getToken } from '@/src/storage/auth';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
 const USE_MOCK = !BASE_URL;
@@ -27,6 +30,54 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
   }
 }
 
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function loginUser(email: string, senha: string): Promise<TokenResponse> {
+  if (USE_MOCK) return mockLogin(email, senha);
+
+  const response = await fetchWithTimeout(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, senha }),
+  });
+
+  if (!response.ok) {
+    const errMap: Record<number, string> = {
+      401: 'E-mail ou senha incorretos.',
+      429: 'Muitas tentativas. Tente novamente em instantes.',
+    };
+    throw new HttpError(response.status, errMap[response.status] ?? `Erro ${response.status}.`);
+  }
+
+  return response.json() as Promise<TokenResponse>;
+}
+
+export async function registerUser(data: RegisterRequest): Promise<void> {
+  if (USE_MOCK) {
+    await mockRegister(data.nome, data.email, data.senha);
+    return;
+  }
+
+  const headers = await authHeaders();
+  const response = await fetchWithTimeout(`${BASE_URL}/api/usuarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const errMap: Record<number, string> = {
+      400: 'Dados inválidos. Verifique os campos.',
+      401: 'Não autorizado.',
+      409: 'E-mail já cadastrado.',
+    };
+    throw new HttpError(response.status, errMap[response.status] ?? `Erro ${response.status}.`);
+  }
+}
+
 export async function querySpec(query: SpecQuery): Promise<SpecResponse> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 800));
@@ -40,9 +91,10 @@ export async function querySpec(query: SpecQuery): Promise<SpecResponse> {
     };
   }
 
+  const headers = await authHeaders();
   const response = await fetchWithTimeout(`${BASE_URL}/api/v1/specs/query`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(query),
   });
 
