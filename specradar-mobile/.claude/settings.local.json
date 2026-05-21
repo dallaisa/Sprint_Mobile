@@ -4,7 +4,11 @@
       "PowerShell(.\\\\node_modules\\\\.bin\\\\tsc --noEmit 2>&1)",
       "Bash(cd \"/d/Trabalhos]/Sprint_Mobile/specradar-mobile\")",
       "Bash(./node_modules/.bin/tsc --noEmit)",
-      "Bash(npm start *)"
+      "Bash(npm start *)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Trabalhos\\\\ChallengeFord2026Java\" -Recurse -Force | Select-Object FullName | ForEach-Object { $_.FullName -replace [regex]::Escape\\(\"D:\\\\Trabalhos\\\\ChallengeFord2026Java\"\\), \".\" } | Sort-Object | head -80)",
+      "Read(//d/Trabalhos/**)",
+      "Read(//mnt/d/Trabalhos/**)",
+      "Bash(git checkout *)"
     ]
   }
 }
