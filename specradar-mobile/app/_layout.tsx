@@ -9,26 +9,34 @@ export default function RootLayout() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    getToken().then((token) => {
-      if (!token) router.replace('/login');
-      setChecking(false);
-    });
-  }, []);
-
-  if (checking) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
-        <ActivityIndicator size="large" color={Colors.fordBlue} />
-      </View>
-    );
-  }
+    let active = true;
+    getToken()
+      .then((token) => {
+        if (active && !token) router.replace('/login');
+      })
+      .catch(() => {
+        if (active) router.replace('/login');
+      })
+      .finally(() => {
+        if (active) setChecking(false);
+      });
+    return () => { active = false; };
+  }, [router]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="ficha/[id]" options={{ headerShown: true, title: 'Ficha Técnica' }} />
-    </Stack>
+    <View style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="ficha/[id]" options={{ headerShown: true, title: 'Ficha Técnica' }} />
+      </Stack>
+      {checking && (
+        <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+          <ActivityIndicator size="large" color={Colors.fordBlue} />
+        </View>
+      )}
+    </View>
   );
 }

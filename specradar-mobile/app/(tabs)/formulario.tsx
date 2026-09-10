@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   View,
   Text,
@@ -18,12 +19,23 @@ import { SpecCard } from '@/src/components/SpecCard';
 const MARCA_REGEX = /^[A-Za-zÀ-ú\s\-]{2,40}$/;
 
 export default function FormularioScreen() {
+  const params = useLocalSearchParams<{ marca?: string; modelo?: string }>();
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [versao, setVersao] = useState('');
   const [atributosSelecionados, setAtributosSelecionados] = useState<string[]>([...ATRIBUTOS_PADRAO]);
   const [erros, setErros] = useState<Record<string, string>>({});
   const { data, loading, error, execute, reset } = useSpecQuery();
+
+  useEffect(() => {
+    if (params.marca && params.modelo) {
+      reset();
+      setMarca(params.marca);
+      setModelo(params.modelo);
+      setVersao('');
+      setErros({});
+    }
+  }, [params.marca, params.modelo, reset]);
 
   function validar(): boolean {
     const novosErros: Record<string, string> = {};
