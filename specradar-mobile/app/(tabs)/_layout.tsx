@@ -14,7 +14,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      initialRouteName="chat"
+      initialRouteName="home"
       screenOptions={{
         headerRight: () => (
           <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
@@ -34,6 +34,16 @@ export default function TabLayout() {
         headerTitleStyle: { fontWeight: '700' },
       }}
     >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Início',
+          tabBarLabel: 'Início',
+          tabBarIcon: ({ color, size }) => (
+            <IconSymbol name="house.fill" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="chat"
         options={{
