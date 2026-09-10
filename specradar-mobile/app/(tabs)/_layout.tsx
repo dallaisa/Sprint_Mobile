@@ -1,8 +1,20 @@
 import { Tabs, useRouter } from 'expo-router';
-import { Platform, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { Colors } from '@/src/theme/colors';
+import { Platform, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { Palette, Fonts } from '@/src/theme/theme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { clearToken } from '@/src/storage/auth';
+
+type SFName = Parameters<typeof IconSymbol>[0]['name'];
+
+/** Icon slot with the active top-tick — reserved even when inactive to avoid jitter. */
+function TabIcon({ name, color, focused, size }: { name: SFName; color: string; focused: boolean; size: number }) {
+  return (
+    <View style={styles.iconSlot}>
+      <View style={[styles.tick, focused && styles.tickActive]} />
+      <IconSymbol name={name} size={size} color={color} />
+    </View>
+  );
+}
 
 export default function TabLayout() {
   const router = useRouter();
@@ -16,42 +28,44 @@ export default function TabLayout() {
     <Tabs
       initialRouteName="home"
       screenOptions={{
+        // Interim header for tabs not yet redesigned; home hides it and uses AppHeader.
         headerRight: () => (
           <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
             <Text style={styles.logoutTexto}>Sair</Text>
           </TouchableOpacity>
         ),
-        tabBarActiveTintColor: Colors.fordBlue,
-        tabBarInactiveTintColor: Colors.textSecondary,
-        tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
-          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
-          height: Platform.OS === 'ios' ? 84 : 60,
-        },
-        headerStyle: { backgroundColor: Colors.fordBlue },
+        headerStyle: { backgroundColor: Palette.navy },
         headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: '700' },
+        headerTitleStyle: { fontFamily: Fonts.title, letterSpacing: 0.5 },
+        tabBarActiveTintColor: Palette.navy,
+        tabBarInactiveTintColor: Palette.inkMuted,
+        tabBarLabelStyle: styles.tabLabel,
+        tabBarItemStyle: { paddingTop: 4 },
+        tabBarStyle: {
+          backgroundColor: Palette.surface,
+          borderTopColor: Palette.hairline,
+          borderTopWidth: 1,
+          elevation: 0,
+          shadowOpacity: 0,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 8,
+          height: Platform.OS === 'ios' ? 86 : 64,
+        },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Início',
+          headerShown: false,
           tabBarLabel: 'Início',
-          tabBarIcon: ({ color, size }) => (
-            <IconSymbol name="house.fill" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="house.fill" {...p} />,
         }}
       />
       <Tabs.Screen
         name="chat"
         options={{
-          title: 'Chat',
-          tabBarLabel: 'Chat',
-          tabBarIcon: ({ color, size }) => (
-            <IconSymbol name="message.fill" size={size} color={color} />
-          ),
+          title: 'Consultar',
+          tabBarLabel: 'Consultar',
+          tabBarIcon: (p) => <TabIcon name="message.fill" {...p} />,
         }}
       />
       <Tabs.Screen
@@ -59,9 +73,7 @@ export default function TabLayout() {
         options={{
           title: 'Formulário',
           tabBarLabel: 'Formulário',
-          tabBarIcon: ({ color, size }) => (
-            <IconSymbol name="doc.text.fill" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="doc.text.fill" {...p} />,
         }}
       />
       <Tabs.Screen
@@ -69,9 +81,7 @@ export default function TabLayout() {
         options={{
           title: 'Histórico',
           tabBarLabel: 'Histórico',
-          tabBarIcon: ({ color, size }) => (
-            <IconSymbol name="clock.fill" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="clock.fill" {...p} />,
         }}
       />
       <Tabs.Screen
@@ -79,9 +89,7 @@ export default function TabLayout() {
         options={{
           title: 'Comparar',
           tabBarLabel: 'Comparar',
-          tabBarIcon: ({ color, size }) => (
-            <IconSymbol name="chart.bar.fill" size={size} color={color} />
-          ),
+          tabBarIcon: (p) => <TabIcon name="chart.bar.fill" {...p} />,
         }}
       />
     </Tabs>
@@ -90,5 +98,9 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   logoutBtn: { marginRight: 16, paddingVertical: 4, paddingHorizontal: 8 },
-  logoutTexto: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  logoutTexto: { color: '#fff', fontSize: 14, fontFamily: Fonts.bodySemibold },
+  tabLabel: { fontFamily: Fonts.label, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
+  iconSlot: { alignItems: 'center', justifyContent: 'flex-start' },
+  tick: { height: 2, width: 22, marginBottom: 6, backgroundColor: 'transparent' },
+  tickActive: { backgroundColor: Palette.navy },
 });
