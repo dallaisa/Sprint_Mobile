@@ -32,7 +32,7 @@ export default function LoginScreen() {
     try {
       const { token, expiraEm } = await loginUser(email.trim(), senha);
       await saveToken(token, expiraEm);
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/chat');
     } catch (e: unknown) {
       setErro(e instanceof Error ? e.message : 'Erro ao fazer login.');
     } finally {
