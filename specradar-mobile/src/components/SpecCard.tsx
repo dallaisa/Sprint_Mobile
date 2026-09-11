@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Share } from 'react-native';
 import { SpecResponse } from '@/src/types/spec';
 import { Colors } from '@/src/theme/colors';
 import { rotuloAtributo } from '@/src/domain/atributos';
-import { ConfidenceBadge } from './ConfidenceBadge';
+import { ConfidenceBadge, ConfidenceGeralBadge } from './ConfidenceBadge';
 
 interface Props {
   spec: SpecResponse;
@@ -33,6 +33,8 @@ export function SpecCard({ spec, atributosFiltro }: Props) {
         <View style={styles.headerTexto}>
           <Text style={styles.titulo}>{spec.marca} {spec.modelo}</Text>
           <Text style={styles.versao}>{spec.versao}</Text>
+          {/* Não renderiza nada em ficha antiga do histórico, que não tem o campo. */}
+          <ConfidenceGeralBadge confianca={spec.confidence_geral} />
         </View>
         <TouchableOpacity style={styles.botaoCSV} onPress={exportarCSV}>
           <Text style={styles.botaoCSVTexto}>Exportar CSV</Text>

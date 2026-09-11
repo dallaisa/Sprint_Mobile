@@ -1,15 +1,26 @@
 import { SpecQuery, SpecResponse, ApiError } from '@/src/types/spec';
+import { SpecApiResponse } from '@/src/types/api';
 import { TokenResponse, RegisterRequest } from '@/src/types/auth';
 import { rangerRaptorMock } from './mocks/ranger-raptor';
 import { mockLogin, mockRegister } from './mocks/auth';
 import { getToken } from '@/src/storage/auth';
+import { toSpecResponse, toApiError, slugVeiculo, ApiErrorNormalizado } from './adapters';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
 const USE_MOCK = !BASE_URL;
 const TIMEOUT_MS = 15000;
 
 export class HttpError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(
+    public status: number,
+    message: string,
+    /**
+     * Corpo do erro já normalizado, quando o backend mandou um. Carrega
+     * campos_invalidos e sugestoes_similares — hoje ninguém renderiza os
+     * dois, é a Fase 4 que passa a usá-los.
+     */
+    public detalhes?: ApiErrorNormalizado
+  ) {
     super(message);
     this.name = 'HttpError';
   }
@@ -35,23 +46,52 @@ async function authHeaders(): Promise<Record<string, string>> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+/**
+ * Monta o HttpError de uma resposta com falha, preferindo a mensagem do
+ * backend quando ela existe. `errMap` continua como fallback: os 401/403
+ * do SecurityConfig trazem mensagem genérica, e um corpo não-JSON (HTML
+ * de proxy, resposta vazia) não traz nada.
+ */
+async function erroDaResposta(
+  response: Response,
+  errMap: Record<number, string>
+): Promise<HttpError> {
+  let corpo: unknown = null;
+  try {
+    corpo = await response.json();
+  } catch {
+    // corpo vazio ou não-JSON — segue com o fallback
+  }
+
+  const detalhes = toApiError(corpo, response.status);
+  const mensagem =
+    detalhes.mensagem || errMap[response.status] || `Erro ${response.status}.`;
+
+  return new HttpError(response.status, mensagem, detalhes);
+}
+
 export async function loginUser(email: string, senha: string): Promise<TokenResponse> {
   if (USE_MOCK) return mockLogin(email, senha);
 
-  const response = await fetchWithTimeout(`${BASE_URL}/api/auth/login`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, senha }),
   });
 
   if (!response.ok) {
-    const errMap: Record<number, string> = {
+    throw await erroDaResposta(response, {
       401: 'E-mail ou senha incorretos.',
       429: 'Muitas tentativas. Tente novamente em instantes.',
-    };
-    throw new HttpError(response.status, errMap[response.status] ?? `Erro ${response.status}.`);
+    });
   }
 
+  // ATENÇÃO — dívida conhecida, resolvida na Fase 3: o backend devolve
+  // AuthApiResponse ({access_token, refresh_token, expires_in, role}) e
+  // este cast afirma TokenResponse ({token, tipo, expiraEm}). Contra a API
+  // real, o login grava undefined. Não foi corrigido aqui porque o conserto
+  // é indissociável de storage/auth.ts e do fluxo de refresh, que são da
+  // Fase 3 inteira. O modo mock não é afetado.
   return response.json() as Promise<TokenResponse>;
 }
 
@@ -62,31 +102,34 @@ export async function registerUser(data: RegisterRequest): Promise<void> {
   }
 
   const headers = await authHeaders();
-  const response = await fetchWithTimeout(`${BASE_URL}/api/usuarios`, {
+  const response = await fetchWithTimeout(`${BASE_URL}/api/v1/usuarios`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...headers },
     body: JSON.stringify(data),
   });
 
   if (!response.ok) {
-    const errMap: Record<number, string> = {
+    throw await erroDaResposta(response, {
       400: 'Dados inválidos. Verifique os campos.',
       401: 'Não autorizado.',
       409: 'E-mail já cadastrado.',
-    };
-    throw new HttpError(response.status, errMap[response.status] ?? `Erro ${response.status}.`);
+    });
   }
 }
 
 export async function querySpec(query: SpecQuery): Promise<SpecResponse> {
   if (USE_MOCK) {
     await new Promise((r) => setTimeout(r, 800));
+    const versao = query.versao ?? rangerRaptorMock.versao;
     return {
       ...rangerRaptorMock,
-      id: `${query.marca}-${query.modelo}-${Date.now()}`.toLowerCase().replace(/\s+/g, '-'),
+      // Mesma regra de id do caminho real. Antes havia um Date.now() aqui,
+      // o que fazia toda consulta do mesmo veículo virar entrada nova no
+      // histórico — o dedupe de storage/history.ts nunca chegava a agir.
+      id: slugVeiculo(query.marca, query.modelo, versao),
       marca: query.marca,
       modelo: query.modelo,
-      versao: query.versao ?? rangerRaptorMock.versao,
+      versao,
       consultado_em: new Date().toISOString(),
     };
   }
@@ -99,16 +142,16 @@ export async function querySpec(query: SpecQuery): Promise<SpecResponse> {
   });
 
   if (!response.ok) {
-    const errMap: Record<number, string> = {
+    throw await erroDaResposta(response, {
       401: 'Não autorizado. Faça login novamente.',
       404: 'Veículo não encontrado na base de dados.',
       422: 'Dados inválidos. Verifique marca e modelo.',
       503: 'Serviço indisponível. Tente novamente em instantes.',
-    };
-    throw new HttpError(response.status, errMap[response.status] ?? `Erro ${response.status}.`);
+    });
   }
 
-  return response.json() as Promise<SpecResponse>;
+  const api = (await response.json()) as SpecApiResponse;
+  return toSpecResponse(api);
 }
 
 export type { ApiError };

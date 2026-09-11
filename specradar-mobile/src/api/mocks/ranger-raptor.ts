@@ -20,6 +20,10 @@ export const rangerRaptorMock: SpecResponse = {
   modelo: 'Ranger Raptor',
   versao: '2024',
   consultado_em: new Date().toISOString(),
+  // PARCIAL porque 11 dos 16 campos são inferidos. Exercita de propósito
+  // um valor que só existe no domínio geral, nunca no de campo.
+  confidence_geral: 'PARCIAL',
+  cache_hit: false,
   atributos: {
     motor: {
       valor: '2.0L EcoBlue Biturbo Diesel',

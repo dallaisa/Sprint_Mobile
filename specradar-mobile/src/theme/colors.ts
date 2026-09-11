@@ -7,6 +7,9 @@ export const Colors = {
   textSecondary: '#666666',
   border: '#e0e0e0',
   confidenceAlta: '#2e7d32',
+  // Âmbar escurecido de propósito: o tom claro natural não alcança 4.5:1
+  // sobre a superfície branca, e este selo é texto pequeno.
+  confidenceMedia: '#8a6500',
   confidenceInferida: '#e65100',
   confidenceNaoEncontrado: '#9e9e9e',
   error: '#c62828',
