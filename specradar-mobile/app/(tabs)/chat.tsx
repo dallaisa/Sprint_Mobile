@@ -10,7 +10,8 @@ import {
   ScrollView,
 } from 'react-native';
 import { useSpecQuery } from '@/src/hooks/useSpecQuery';
-import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_API } from '@/src/domain/atributos';
 import { LoadingSpinner } from '@/src/components/LoadingSpinner';
 import { ErrorMessage } from '@/src/components/ErrorMessage';
 import { SpecCard } from '@/src/components/SpecCard';
@@ -23,7 +24,7 @@ export default function ChatScreen() {
     const parts = text.trim().split(/\s+/);
     const marca = parts[0] ?? '';
     const modelo = parts.slice(1).join(' ') || marca;
-    return { marca, modelo, atributos: ATRIBUTOS_PADRAO };
+    return { marca, modelo, atributos: [...ATRIBUTOS_API] };
   }
 
   function handleConsultar() {

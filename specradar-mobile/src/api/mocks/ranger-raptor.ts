@@ -1,5 +1,19 @@
 import { SpecResponse } from '@/src/types/spec';
 
+/**
+ * Mock da Ford Ranger Raptor — caso de teste oficial do brief da Ford.
+ *
+ * Usado quando EXPO_PUBLIC_API_BASE_URL está ausente, e como plano B na
+ * apresentação caso a API não suba. Por isso as chaves seguem exatamente
+ * o vocabulário de ATRIBUTOS_API (espelho do backend) e os valores imitam
+ * o formato que o backend devolve: sempre string COM unidade, nunca
+ * número puro — é da unidade que a comparação extrai o número.
+ *
+ * ATENÇÃO — dado herdado a conferir: motor/potência/torque abaixo vieram
+ * do mock anterior e descrevem a Ranger 2.0 biturbo diesel, não a Raptor
+ * (que no Brasil é 3.0 V6 EcoBoost a gasolina, ~397 cv). Mantido como
+ * estava para não misturar correção de dado com este refactor.
+ */
 export const rangerRaptorMock: SpecResponse = {
   id: 'ford-ranger-raptor-2024',
   marca: 'Ford',
@@ -13,14 +27,14 @@ export const rangerRaptorMock: SpecResponse = {
       fonte: 'Ford Brasil — catálogo oficial 2024',
       verificado_em: '2024-09-01',
     },
-    potencia_cv: {
-      valor: 213,
+    potencia: {
+      valor: '213 cv',
       confianca: 'alta',
       fonte: 'Ford Brasil — catálogo oficial 2024',
       verificado_em: '2024-09-01',
     },
-    torque_nm: {
-      valor: 500,
+    torque: {
+      valor: '500 Nm',
       confianca: 'alta',
       fonte: 'Ford Brasil — catálogo oficial 2024',
       verificado_em: '2024-09-01',
@@ -37,53 +51,75 @@ export const rangerRaptorMock: SpecResponse = {
       fonte: 'Ford Brasil — catálogo oficial 2024',
       verificado_em: '2024-09-01',
     },
-    peso_kg: {
-      valor: 2350,
-      confianca: 'alta',
-      fonte: 'Ford Brasil — catálogo oficial 2024',
-      verificado_em: '2024-09-01',
+    amortecedores: {
+      valor: 'Fox Racing 2.5 Live Valve com reservatório externo',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
     },
-    comprimento_mm: {
-      valor: 5398,
-      confianca: 'alta',
-      fonte: 'Ford Brasil — catálogo oficial 2024',
-      verificado_em: '2024-09-01',
+    aceleracao: {
+      valor: '10,5 segundos',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
     },
-    largura_mm: {
-      valor: 1910,
-      confianca: 'alta',
-      fonte: 'Ford Brasil — catálogo oficial 2024',
-      verificado_em: '2024-09-01',
+    modos_conducao: {
+      valor: 'Normal, Sport, Grama/Cascalho/Neve, Lama/Sulco, Areia, Baja',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
     },
-    altura_mm: {
-      valor: 1910,
-      confianca: 'alta',
-      fonte: 'Ford Brasil — catálogo oficial 2024',
-      verificado_em: '2024-09-01',
+    farois: {
+      valor: 'Full LED com assinatura em C e faróis de neblina',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
     },
-    capacidade_carga_kg: {
-      valor: 750,
-      confianca: 'alta',
-      fonte: 'Ford Brasil — catálogo oficial 2024',
-      verificado_em: '2024-09-01',
+    rodas_pneus: {
+      valor: 'Aro 17" com pneus BFGoodrich All-Terrain KO2 285/70 R17',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
     },
-    preco_base_brl: {
-      valor: 459990,
+    preco: {
+      valor: 'R$ 459.990,00',
       confianca: 'inferida',
       fonte: 'Ford Brasil — tabela de preços set/2024',
       verificado_em: '2024-09-15',
     },
-    consumo_cidade: {
-      valor: '9,5 km/l',
+    // O backend concatena cidade e estrada num campo só. A extração
+    // numérica pega o PRIMEIRO "km/l" da string — por isso cidade vem
+    // primeiro, e a mesma ordem precisa valer para todo veículo, senão
+    // a comparação mistura ciclo urbano com rodoviário.
+    consumo: {
+      valor: '9,5 km/l (cidade) / 12,0 km/l (estrada)',
       confianca: 'inferida',
-      fonte: 'INMETRO — ciclo urbano estimado',
+      fonte: 'INMETRO — ciclos urbano e rodoviário estimados',
       verificado_em: '2024-08-01',
     },
-    consumo_estrada: {
-      valor: '12,0 km/l',
+    dimensoes: {
+      valor: '5398 × 1910 × 1910 mm',
       confianca: 'inferida',
-      fonte: 'INMETRO — ciclo rodoviário estimado',
-      verificado_em: '2024-08-01',
+      fonte: 'Ford Brasil — catálogo oficial 2024',
+      verificado_em: '2024-09-01',
+    },
+    modos_volante: {
+      valor: 'Normal e Sport (assistência variável)',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
+    },
+    modos_escapamento: {
+      valor: 'Quiet, Normal, Sport, Baja',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
+    },
+    modos_amortecedor: {
+      valor: 'Normal e Sport (Live Valve adaptativo)',
+      confianca: 'inferida',
+      fonte: 'Mock de desenvolvimento — valor plausível, não verificado',
+      verificado_em: null,
     },
   },
 };

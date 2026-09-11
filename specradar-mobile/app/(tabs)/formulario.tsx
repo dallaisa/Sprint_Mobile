@@ -11,7 +11,8 @@ import {
   Platform,
 } from 'react-native';
 import { useSpecQuery } from '@/src/hooks/useSpecQuery';
-import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_FORMULARIO, rotuloAtributo } from '@/src/domain/atributos';
 import { LoadingSpinner } from '@/src/components/LoadingSpinner';
 import { ErrorMessage } from '@/src/components/ErrorMessage';
 import { SpecCard } from '@/src/components/SpecCard';
@@ -23,7 +24,7 @@ export default function FormularioScreen() {
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [versao, setVersao] = useState('');
-  const [atributosSelecionados, setAtributosSelecionados] = useState<string[]>([...ATRIBUTOS_PADRAO]);
+  const [atributosSelecionados, setAtributosSelecionados] = useState<string[]>([...ATRIBUTOS_FORMULARIO]);
   const [erros, setErros] = useState<Record<string, string>>({});
   const { data, loading, error, execute, reset } = useSpecQuery();
 
@@ -63,7 +64,7 @@ export default function FormularioScreen() {
     setMarca('');
     setModelo('');
     setVersao('');
-    setAtributosSelecionados([...ATRIBUTOS_PADRAO]);
+    setAtributosSelecionados([...ATRIBUTOS_FORMULARIO]);
     setErros({});
   }
 
@@ -102,7 +103,7 @@ export default function FormularioScreen() {
 
             <Text style={styles.label}>Atributos</Text>
             <View style={styles.chips}>
-              {ATRIBUTOS_PADRAO.map((attr) => {
+              {ATRIBUTOS_FORMULARIO.map((attr) => {
                 const ativo = atributosSelecionados.includes(attr);
                 return (
                   <TouchableOpacity
@@ -112,7 +113,7 @@ export default function FormularioScreen() {
                     disabled={loading}
                   >
                     <Text style={[styles.chipText, ativo && styles.chipTextAtivo]}>
-                      {attr.replace(/_/g, ' ')}
+                      {rotuloAtributo(attr)}
                     </Text>
                   </TouchableOpacity>
                 );

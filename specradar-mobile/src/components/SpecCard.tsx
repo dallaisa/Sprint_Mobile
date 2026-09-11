@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet, Share } from 'react-native';
 import { SpecResponse } from '@/src/types/spec';
 import { Colors } from '@/src/theme/colors';
+import { rotuloAtributo } from '@/src/domain/atributos';
 import { ConfidenceBadge } from './ConfidenceBadge';
 
 interface Props {
@@ -40,7 +41,7 @@ export function SpecCard({ spec, atributosFiltro }: Props) {
 
       {entradas.map(([chave, campo]) => (
         <View key={chave} style={styles.campo}>
-          <Text style={styles.campoChave}>{chave.replace(/_/g, ' ')}</Text>
+          <Text style={styles.campoChave}>{rotuloAtributo(chave)}</Text>
           <Text style={[styles.campoValor, campo.confianca === 'nao_encontrado' && styles.valorNull]}>
             {campo.valor !== null ? String(campo.valor) : '—'}
           </Text>

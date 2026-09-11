@@ -3,26 +3,27 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { loadHistory } from '@/src/storage/history';
 import { SpecResponse, SpecField } from '@/src/types/spec';
-import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
+import { Colors } from '@/src/theme/colors';
+import {
+  ATRIBUTOS_API,
+  MAIOR_MELHOR,
+  MENOR_MELHOR,
+  extrairValorComparavel,
+  rotuloAtributo,
+} from '@/src/domain/atributos';
 import { ConfidenceBadge } from '@/src/components/ConfidenceBadge';
 
-const MAIOR_MELHOR = new Set([
-  'potencia_cv', 'torque_nm', 'capacidade_carga_kg',
-  'consumo_cidade', 'consumo_estrada',
-]);
-const MENOR_MELHOR = new Set(['peso_kg', 'preco_base_brl']);
-
-function extrairNumero(valor: string | number | null): number | null {
-  if (valor === null) return null;
-  if (typeof valor === 'number') return valor;
-  const match = valor.replace(',', '.').match(/[\d.]+/);
-  return match ? parseFloat(match[0]) : null;
-}
-
+/**
+ * Cálculo local do vencedor, espelhando `determinarVencedor` do backend.
+ *
+ * A partir da Fase 5 a fonte passa a ser `GET /api/v1/specs/compare`, e
+ * isto vira o caminho de fallback offline — por isso as regras vivem em
+ * src/domain/atributos.ts, para as duas implementações não divergirem.
+ */
 function calcularVencedor(chave: string, f1: SpecField, f2: SpecField): 'v1' | 'v2' | null {
   if (f1.confianca === 'nao_encontrado' || f2.confianca === 'nao_encontrado') return null;
-  const n1 = extrairNumero(f1.valor);
-  const n2 = extrairNumero(f2.valor);
+  const n1 = extrairValorComparavel(chave, f1.valor);
+  const n2 = extrairValorComparavel(chave, f2.valor);
   if (n1 === null || n2 === null || n1 === n2) return null;
   if (MAIOR_MELHOR.has(chave)) return n1 > n2 ? 'v1' : 'v2';
   if (MENOR_MELHOR.has(chave)) return n1 < n2 ? 'v1' : 'v2';
@@ -56,7 +57,7 @@ export default function CompararScreen() {
 
   if (!spec1 || !spec2) return null;
 
-  const atributos = ATRIBUTOS_PADRAO.filter(
+  const atributos = ATRIBUTOS_API.filter(
     (a) => a in spec1.atributos && a in spec2.atributos
   );
 
@@ -76,7 +77,7 @@ export default function CompararScreen() {
         const venc = calcularVencedor(chave, f1, f2);
         return (
           <View key={chave} style={styles.linha}>
-            <Text style={styles.chave}>{chave.replace(/_/g, '\n')}</Text>
+            <Text style={styles.chave}>{rotuloAtributo(chave)}</Text>
             <CelulaAtributo campo={f1} vencendo={venc === 'v1'} />
             <CelulaAtributo campo={f2} vencendo={venc === 'v2'} />
           </View>

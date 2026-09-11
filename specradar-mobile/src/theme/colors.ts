@@ -14,19 +14,3 @@ export const Colors = {
   compareWinner: '#e8f5e9',
   compareLooser: '#ffffff',
 };
-
-export const ATRIBUTOS_PADRAO = [
-  'motor',
-  'potencia_cv',
-  'torque_nm',
-  'transmissao',
-  'tracao',
-  'peso_kg',
-  'comprimento_mm',
-  'largura_mm',
-  'altura_mm',
-  'capacidade_carga_kg',
-  'preco_base_brl',
-  'consumo_cidade',
-  'consumo_estrada',
-];
