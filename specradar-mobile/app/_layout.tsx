@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+<<<<<<< Updated upstream
 import { Stack, useRouter } from 'expo-router';
 import { useFonts } from 'expo-font';
 import {
@@ -12,11 +13,16 @@ import {
   Barlow_500Medium,
   Barlow_600SemiBold,
 } from '@expo-google-fonts/barlow';
+=======
+import { Stack, useRouter, useSegments } from 'expo-router';
+>>>>>>> Stashed changes
 import { getToken } from '@/src/storage/auth';
 import { Colors } from '@/src/theme/colors';
 
 export default function RootLayout() {
   const router = useRouter();
+  const segments = useSegments();
+  const route = segments[0] as string | undefined;
   const [checking, setChecking] = useState(true);
 
   const [fontsLoaded] = useFonts({
@@ -29,7 +35,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
+    if (!route || route === 'login' || route === 'register') {
+      setChecking(false);
+      return;
+    }
     let active = true;
+    setChecking(true);
     getToken()
       .then((token) => {
         if (active && !token) router.replace('/login');
@@ -41,7 +52,7 @@ export default function RootLayout() {
         if (active) setChecking(false);
       });
     return () => { active = false; };
-  }, [router]);
+  }, [router, route]);
 
   const ready = fontsLoaded && !checking;
 

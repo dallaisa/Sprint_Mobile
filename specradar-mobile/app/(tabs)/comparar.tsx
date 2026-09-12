@@ -1,5 +1,9 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { EmptyPanel, PageIntro } from '@/src/components/radar-ui';
+import { PhotoBackground } from '@/src/components/screen-background';
+import { ComparisonPicker } from '@/src/components/comparison-picker';
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { loadHistory } from '@/src/storage/history';
 import { SpecResponse, SpecField } from '@/src/types/spec';
@@ -30,39 +34,51 @@ function calcularVencedor(chave: string, f1: SpecField, f2: SpecField): 'v1' | '
 }
 
 export default function CompararScreen() {
+  const insets = useSafeAreaInsets();
   const { v1, v2 } = useLocalSearchParams<{ v1?: string; v2?: string }>();
   const [spec1, setSpec1] = useState<SpecResponse | null>(null);
   const [spec2, setSpec2] = useState<SpecResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [choosing, setChoosing] = useState(!v1 || !v2);
 
   useEffect(() => {
     if (!v1 || !v2) return;
+    setChoosing(false);
+    let active = true;
+    setLoading(true);
+    setSpec1(null);
+    setSpec2(null);
     loadHistory().then((h) => {
+      if (!active) return;
       setSpec1(h.find((s) => s.id === v1) ?? null);
       setSpec2(h.find((s) => s.id === v2) ?? null);
-    });
+    }).catch(() => {
+      if (active) { setSpec1(null); setSpec2(null); }
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [v1, v2]);
 
-  if (!v1 || !v2) {
+  if (choosing) {
     return (
-      <View style={styles.vazio}>
-        <Text style={styles.vazioIcone}>⚖️</Text>
-        <Text style={styles.vazioTexto}>Nenhuma comparação ativa</Text>
-        <Text style={styles.vazioSubtexto}>
-          Abra o Histórico e toque em "Comparar" em dois veículos.
-        </Text>
-      </View>
+      <PhotoBackground><ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}>
+        <ComparisonPicker onCompare={(first, second) => { setSpec1(first); setSpec2(second); setLoading(false); setChoosing(false); }} />
+      </ScrollView></PhotoBackground>
     );
   }
 
-  if (!spec1 || !spec2) return null;
+  if (!spec1 || !spec2) return <PhotoBackground><View style={styles.vazio}>
+    {loading ? <ActivityIndicator color="#fff" size="large" accessibilityLabel="Carregando comparação" /> : <EmptyPanel icon="search-off" title="Vamos selecionar novamente?" description="Uma das fichas não está mais disponível no histórico. Escolha dois veículos para continuar." href="/(tabs)/historico" action="Abrir histórico" />}
+  </View></PhotoBackground>;
 
   const atributos = ATRIBUTOS_PADRAO.filter(
     (a) => a in spec1.atributos && a in spec2.atributos
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scroll}>
-      {/* Cabeçalho */}
+    <PhotoBackground><ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.container} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}>
+      <Pressable accessibilityRole="button" onPress={() => setChoosing(true)} style={styles.chooseButton}><Text style={styles.chooseLabel}>← Escolher outros carros</Text></Pressable>
+      {!process.env.EXPO_PUBLIC_API_BASE_URL && <Text style={styles.demo}>Demonstração · valores de exemplo da Ranger Raptor.</Text>}
+      <View style={styles.intro}><PageIntro eyebrow="LADO A LADO" title="O que faz a diferença?" description="Confira os valores e a confiança de cada atributo antes de escolher." /></View>
       <View style={styles.headerRow}>
         <View style={styles.colunaChave} />
         <VeiculoHeader spec={spec1} />
@@ -82,7 +98,7 @@ export default function CompararScreen() {
           </View>
         );
       })}
-    </ScrollView>
+    </ScrollView></PhotoBackground>
   );
 }
 
@@ -108,11 +124,15 @@ function CelulaAtributo({ campo, vencendo }: { campo: SpecField; vencendo: boole
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  scroll: { padding: 12, gap: 2 },
+  chooseButton: { borderRadius: 24, backgroundColor: '#fff', padding: 16, marginBottom: 8 },
+  chooseLabel: { color: Colors.fordBlue, fontWeight: '600' },
+  demo: { color: '#fff', fontSize: 12, marginBottom: 12 },
+  container: { flex: 1, backgroundColor: 'transparent' },
+  intro: { backgroundColor: '#FFFFFFF0', borderRadius: 24, padding: 18, marginBottom: 12 },
+  scroll: { padding: 18, gap: 8, paddingBottom: 32, width: '100%', maxWidth: 720, alignSelf: 'center' },
   vazio: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
@@ -130,7 +150,7 @@ const styles = StyleSheet.create({
   colunaHeader: {
     flex: 1,
     backgroundColor: Colors.fordBlue,
-    borderRadius: 8,
+    borderRadius: 24,
     padding: 10,
     gap: 2,
   },
@@ -145,7 +165,7 @@ const styles = StyleSheet.create({
   chave: {
     width: 80,
     fontSize: 10,
-    color: Colors.textSecondary,
+    color: '#FFFFFF',
     textTransform: 'uppercase',
     fontWeight: '600',
     paddingVertical: 10,
@@ -154,7 +174,7 @@ const styles = StyleSheet.create({
   celula: {
     flex: 1,
     backgroundColor: Colors.surface,
-    borderRadius: 6,
+    borderRadius: 20,
     padding: 10,
     borderWidth: 1,
     borderColor: Colors.border,
