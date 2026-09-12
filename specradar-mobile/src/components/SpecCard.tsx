@@ -30,8 +30,9 @@ export function SpecCard({ spec, atributosFiltro }: Props) {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerTexto}>
-          <Text style={styles.titulo}>{spec.marca} {spec.modelo}</Text>
-          <Text style={styles.versao}>{spec.versao}</Text>
+          <Text style={styles.eyebrow}>FICHA TÉCNICA</Text>
+          <Text selectable style={styles.titulo}>{spec.marca} {spec.modelo}</Text>
+          <Text selectable style={styles.versao}>{spec.versao}</Text>
         </View>
         <TouchableOpacity style={styles.botaoCSV} onPress={exportarCSV}>
           <Text style={styles.botaoCSVTexto}>Exportar CSV</Text>
@@ -41,10 +42,11 @@ export function SpecCard({ spec, atributosFiltro }: Props) {
       {entradas.map(([chave, campo]) => (
         <View key={chave} style={styles.campo}>
           <Text style={styles.campoChave}>{chave.replace(/_/g, ' ')}</Text>
-          <Text style={[styles.campoValor, campo.confianca === 'nao_encontrado' && styles.valorNull]}>
+          <Text selectable style={[styles.campoValor, campo.confianca === 'nao_encontrado' && styles.valorNull]}>
             {campo.valor !== null ? String(campo.valor) : '—'}
           </Text>
           <ConfidenceBadge confianca={campo.confianca} />
+          {campo.fonte && <Text selectable style={styles.fonte}>Fonte: {campo.fonte}</Text>}
         </View>
       ))}
     </View>
@@ -52,7 +54,9 @@ export function SpecCard({ spec, atributosFiltro }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { gap: 8 },
+  container: { gap: 12 },
+  eyebrow: { color: Colors.fordBlue, fontSize: 10, letterSpacing: 1.5, marginBottom: 8, fontWeight: '700' },
+  fonte: { color: Colors.textSecondary, fontSize: 11, lineHeight: 17, marginTop: 8 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -64,15 +68,15 @@ const styles = StyleSheet.create({
   versao: { fontSize: 14, color: Colors.textSecondary, marginTop: 2 },
   botaoCSV: {
     backgroundColor: Colors.fordBlue,
-    borderRadius: 6,
+    borderRadius: 20,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 12,
   },
   botaoCSVTexto: { color: '#fff', fontWeight: '600', fontSize: 13 },
   campo: {
     backgroundColor: Colors.surface,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 24,
+    padding: 18,
     borderWidth: 1,
     borderColor: Colors.border,
   },

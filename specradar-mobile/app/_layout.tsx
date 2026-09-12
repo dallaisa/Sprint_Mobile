@@ -1,15 +1,46 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+<<<<<<< Updated upstream
 import { Stack, useRouter } from 'expo-router';
+import { useFonts } from 'expo-font';
+import {
+  BarlowCondensed_600SemiBold,
+  BarlowCondensed_700Bold,
+  BarlowCondensed_800ExtraBold,
+} from '@expo-google-fonts/barlow-condensed';
+import {
+  Barlow_400Regular,
+  Barlow_500Medium,
+  Barlow_600SemiBold,
+} from '@expo-google-fonts/barlow';
+=======
+import { Stack, useRouter, useSegments } from 'expo-router';
+>>>>>>> Stashed changes
 import { getToken } from '@/src/storage/auth';
 import { Colors } from '@/src/theme/colors';
 
 export default function RootLayout() {
   const router = useRouter();
+  const segments = useSegments();
+  const route = segments[0] as string | undefined;
   const [checking, setChecking] = useState(true);
 
+  const [fontsLoaded] = useFonts({
+    BarlowCondensed_600SemiBold,
+    BarlowCondensed_700Bold,
+    BarlowCondensed_800ExtraBold,
+    Barlow_400Regular,
+    Barlow_500Medium,
+    Barlow_600SemiBold,
+  });
+
   useEffect(() => {
+    if (!route || route === 'login' || route === 'register') {
+      setChecking(false);
+      return;
+    }
     let active = true;
+    setChecking(true);
     getToken()
       .then((token) => {
         if (active && !token) router.replace('/login');
@@ -21,7 +52,9 @@ export default function RootLayout() {
         if (active) setChecking(false);
       });
     return () => { active = false; };
-  }, [router]);
+  }, [router, route]);
+
+  const ready = fontsLoaded && !checking;
 
   return (
     <View style={{ flex: 1 }}>
@@ -32,7 +65,7 @@ export default function RootLayout() {
         <Stack.Screen name="register" />
         <Stack.Screen name="ficha/[id]" options={{ headerShown: true, title: 'Ficha Técnica' }} />
       </Stack>
-      {checking && (
+      {!ready && (
         <View style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
           <ActivityIndicator size="large" color={Colors.fordBlue} />
         </View>
