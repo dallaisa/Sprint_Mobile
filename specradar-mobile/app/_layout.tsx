@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-<<<<<<< Updated upstream
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useFonts } from 'expo-font';
 import {
   BarlowCondensed_600SemiBold,
@@ -13,9 +12,6 @@ import {
   Barlow_500Medium,
   Barlow_600SemiBold,
 } from '@expo-google-fonts/barlow';
-=======
-import { Stack, useRouter, useSegments } from 'expo-router';
->>>>>>> Stashed changes
 import { getToken } from '@/src/storage/auth';
 import { Colors } from '@/src/theme/colors';
 

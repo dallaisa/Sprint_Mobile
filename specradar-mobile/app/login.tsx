@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  AccessibilityInfo, ActivityIndicator, Animated, BackHandler, Easing, Keyboard,
+  AccessibilityInfo, ActivityIndicator, Image, Animated, BackHandler, Easing, Keyboard,
   KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput,
   View, useWindowDimensions,
 } from 'react-native';
@@ -103,17 +103,17 @@ export default function LoginScreen() {
   return (
     <PhotoBackground>
       <StatusBar style="light" />
-      <View pointerEvents="none" style={s.shade} />
+      <View pointerEvents="none" style={[s.shade, stage === 'welcome' && { backgroundColor: 'rgba(6, 28, 70, 0.38)' }]} />
       {stage === 'welcome' ? (
-        <View style={[s.welcome, { paddingTop: insets.top + 28, paddingBottom: insets.bottom }]}>
+        <View style={[s.welcome, { paddingTop: insets.top + 28 }]}>
           <Text style={s.brand}>✳ SPECRADAR</Text>
-          <View style={s.welcomeCopy}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={[s.welcomeCopy, { paddingBottom: Math.min(height * 0.18, 150) }]} showsVerticalScrollIndicator={false}>
             <Text accessibilityRole="header" style={s.welcomeTitle}>Bem-vindo ao{ '\n' }seu próximo passo.</Text>
             <Text style={s.welcomeDescription}>Explore os detalhes.{ '\n' }Encontre novas possibilidades.</Text>
-          </View>
+          </ScrollView>
           <View style={s.welcomeActions}>
-            <Pressable accessibilityRole="button" onPress={() => open('signin')} style={s.welcomeButton}><Text style={s.welcomeButtonText}>Sign in</Text></Pressable>
-            <Pressable accessibilityRole="button" onPress={() => open('signup')} style={[s.welcomeButton, s.signupButton]}><Text style={[s.welcomeButtonText, { color: blue }]}>Sign up</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={() => open('signin')} style={[s.welcomeButton, { minHeight: 82 + insets.bottom, paddingBottom: insets.bottom }]}><Text style={s.welcomeButtonText}>Sign in</Text></Pressable>
+            <Pressable accessibilityRole="button" onPress={() => open('signup')} style={[s.welcomeButton, s.signupButton, { minHeight: 82 + insets.bottom, paddingBottom: insets.bottom }]}><Text style={[s.welcomeButtonText, { color: blue }]}>Sign up</Text></Pressable>
           </View>
         </View>
       ) : (
@@ -136,7 +136,7 @@ export default function LoginScreen() {
                 <Pressable accessibilityRole="button" accessibilityState={{ disabled: loading }} disabled={loading} onPress={submit} style={[s.submit, loading && { opacity: 0.6 }]}>{loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitText}>{signup ? 'Sign up' : 'Sign in'}</Text>}</Pressable>
                 <View style={s.divider}><View style={s.line} /><Text style={s.dividerText}>{signup ? 'ou cadastre-se com' : 'ou entre com'}</Text><View style={s.line} /></View>
                 <View style={s.socials}>
-                  {([{ provider: 'Facebook', icon: 'facebook-official', color: '#1877F2' }, { provider: 'Google', icon: 'google', color: '#4285F4' }, { provider: 'Apple', icon: 'apple', color: '#111827' }] as const).map(provider => <Pressable key={provider.provider} accessibilityRole="button" accessibilityLabel={`Continuar com ${provider.provider}`} disabled={loading} onPress={() => setMessage(`O acesso com ${provider.provider} ainda não está habilitado. Por enquanto, entre com a conta admin.`)} style={({ pressed }) => [s.social, pressed && { opacity: 0.5 }]}><FontAwesome name={provider.icon} size={26} color={provider.color} /></Pressable>)}
+                  {([{ provider: 'Facebook', icon: 'facebook-official', color: '#1877F2' }, { provider: 'Google', icon: 'google', color: '#4285F4' }, { provider: 'Apple', icon: 'apple', color: '#111827' }] as const).map(provider => <Pressable key={provider.provider} accessibilityRole="button" accessibilityLabel={`Continuar com ${provider.provider}`} disabled={loading} onPress={() => setMessage(`O acesso com ${provider.provider} ainda não está habilitado. Por enquanto, entre com a conta admin.`)} style={({ pressed }) => [s.social, pressed && { opacity: 0.5 }]}><>{provider.provider === 'Google' ? <Image source={require('@/assets/google.png')} style={{ width: 26, height: 26 }} resizeMode="contain" /> : <FontAwesome name={provider.icon} size={26} color={provider.color} />}</></Pressable>)}
                 </View>
                 <Pressable accessibilityRole="button" disabled={loading} onPress={() => open(signup ? 'signin' : 'signup')} style={s.switch}><Text style={s.switchText}>{signup ? 'Já tem uma conta? ' : 'Ainda não tem conta? '}<Text style={s.link}>{signup ? 'Sign in' : 'Sign up'}</Text></Text></Pressable>
                 {!signup && <Text selectable style={s.demo}>Demo: admin@spec.com · 123456</Text>}
@@ -153,7 +153,7 @@ const s = StyleSheet.create({
   shade: { ...StyleSheet.absoluteFillObject, backgroundColor: '#061C4626' },
   welcome: { flex: 1, justifyContent: 'space-between' },
   brand: { color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 3, paddingHorizontal: 28 },
-  welcomeCopy: { padding: 30, gap: 18 },
+  welcomeCopy: { flexGrow: 1, justifyContent: 'center', padding: 30, gap: 18 },
   welcomeTitle: { color: '#fff', fontSize: 35, lineHeight: 42, fontWeight: '700', textAlign: 'center', letterSpacing: -0.8 },
   welcomeDescription: { color: '#F3F7FF', fontSize: 16, lineHeight: 24, textAlign: 'center' },
   welcomeActions: { flexDirection: 'row', minHeight: 82 },
