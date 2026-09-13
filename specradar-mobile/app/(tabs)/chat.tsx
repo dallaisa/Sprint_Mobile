@@ -1,9 +1,9 @@
+import { useTabContentInset } from '@/src/components/use-tab-content-inset';
 import { HomeBackground } from '@/src/components/screen-background';
 import { useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Image, useWindowDimensions } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useIsFocused } from '@react-navigation/native';
+import { useHeaderHeight, useIsFocused } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import { useSpecQuery } from '@/src/hooks/useSpecQuery';
 import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
@@ -16,6 +16,7 @@ const chatCover = require('@/assets/capaChat.png');
 const chatCoverSize = Image.resolveAssetSource(chatCover);
 
 export default function ChatScreen() {
+  const tabContentInset = useTabContentInset();
   const scrollRef = useRef<ScrollView>(null);
   const contentOffset = useRef(0);
   const [input, setInput] = useState('');
@@ -57,7 +58,7 @@ export default function ChatScreen() {
       {data && <ChatSpecResult key={`${data.id}:${data.consultado_em}`} spec={data} />}
       </View>
     </ScrollView>
-    <View style={s.composerArea}><View style={s.composer}><TextInput style={s.input} placeholder="Marca e modelo do veículo…" placeholderTextColor={Colors.textSecondary} accessibilityLabel="Marca e modelo do veículo" value={input} onChangeText={setInput} onSubmitEditing={() => consult(input)} returnKeyType="send" editable={!loading} /><Pressable accessibilityRole="button" accessibilityLabel="Consultar veículo" disabled={loading || !input.trim()} accessibilityState={{ disabled: loading || !input.trim() }} onPress={() => consult(input)} style={[s.send, (loading || !input.trim()) && { opacity: 0.4 }]}><MaterialIcons name="arrow-upward" size={22} color="#fff" /></Pressable></View><Text style={s.note}>Dados organizados por atributo e nível de confiança.</Text></View>
+    <View style={[s.composerArea, { marginBottom: tabContentInset }]}><View style={s.composer}><TextInput style={s.input} placeholder="Marca e modelo do veículo…" placeholderTextColor={Colors.textSecondary} accessibilityLabel="Marca e modelo do veículo" value={input} onChangeText={setInput} onSubmitEditing={() => consult(input)} returnKeyType="send" editable={!loading} /><Pressable accessibilityRole="button" accessibilityLabel="Consultar veículo" disabled={loading || !input.trim()} accessibilityState={{ disabled: loading || !input.trim() }} onPress={() => consult(input)} style={[s.send, (loading || !input.trim()) && { opacity: 0.4 }]}><MaterialIcons name="arrow-upward" size={22} color="#fff" /></Pressable></View><Text style={s.note}>Dados organizados por atributo e nível de confiança.</Text></View>
   </KeyboardAvoidingView></HomeBackground>;
 }
 const s = StyleSheet.create({ container: { flex: 1, backgroundColor: 'transparent' }, header: { flexDirection: 'row', gap: 12, alignItems: 'center' }, avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#DCEBF5', alignItems: 'center', justifyContent: 'center' }, name: { color: '#fff', fontWeight: '600', fontSize: 16 }, status: { color: '#fff', fontSize: 11 }, newChat: { padding: 12, borderRadius: 24, backgroundColor: '#fff' }, feature: { height: 195, borderRadius: 26, overflow: 'hidden' }, photo: { width: '100%', height: '100%' }, featureCopy: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, gap: 5, backgroundColor: '#315D7BEF' }, featureTitle: { color: '#fff', fontSize: 18, fontWeight: '600' }, featureText: { color: '#DFEBF3', fontSize: 12 }, section: { color: '#fff', fontSize: 17, fontWeight: '600' }, suggestions: { gap: 9 }, suggestion: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 26, padding: 15, backgroundColor: '#E0EBF3' }, suggestionText: { flex: 1, color: Colors.fordBlue, fontSize: 13 }, userBubble: { alignSelf: 'flex-end', maxWidth: '88%', backgroundColor: Colors.fordBlue, padding: 18, borderRadius: 24, borderBottomRightRadius: 7 }, userText: { color: '#fff', fontSize: 15 }, assistantBubble: { alignSelf: 'flex-start', backgroundColor: '#fff', borderRadius: 24, borderBottomLeftRadius: 7, padding: 20, gap: 12 }, assistantLabel: { fontSize: 10, letterSpacing: 1.5, color: Colors.fordBlue, fontWeight: '700' }, assistantText: { fontSize: 14, lineHeight: 22, color: Colors.textPrimary }, composerArea: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, gap: 8, width: '100%', maxWidth: 620, alignSelf: 'center' }, composer: { flexDirection: 'row', alignItems: 'center', padding: 8, paddingLeft: 17, gap: 8, backgroundColor: '#fff', borderRadius: 32, borderWidth: 1, borderColor: Colors.border }, input: { flex: 1, minWidth: 0, paddingVertical: 10, fontSize: 14, color: Colors.textPrimary }, send: { width: 44, height: 44, borderRadius: 24, backgroundColor: Colors.fordBlue, alignItems: 'center', justifyContent: 'center' }, note: { color: '#fff', fontSize: 10, textAlign: 'center' } });

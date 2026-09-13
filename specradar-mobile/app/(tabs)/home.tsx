@@ -1,3 +1,4 @@
+import { useTabContentInset } from '@/src/components/use-tab-content-inset';
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
@@ -10,6 +11,7 @@ import { VehicleCarousel } from '@/src/components/vehicle-carousel';
 import { VEHICLES } from '@/src/data/vehicles';
 
 export default function HomeScreen() {
+  const tabContentInset = useTabContentInset();
   const [category, setCategory] = useState('Todos');
   const [query, setQuery] = useState('');
   const router = useRouter();
@@ -19,7 +21,7 @@ export default function HomeScreen() {
   const filtered = VEHICLES.filter(car => (category === 'Todos' || car.category === category) && `Ford ${car.model}`.toLowerCase().includes(query.toLowerCase().trim()));
   function changeFilter(value: string) { setCategory(value); }
 
-  return <HomeBackground><ScrollView style={s.screen} contentContainerStyle={s.content} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+  return <HomeBackground><ScrollView style={s.screen} contentContainerStyle={[s.content, { paddingBottom: tabContentInset + 30 }]} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
     <View style={s.top}><Text style={s.brand}>✳ SPECRADAR</Text><Link href="/(tabs)/historico" asChild><Pressable accessibilityRole="button" accessibilityLabel="Abrir histórico" style={s.circle}><MaterialIcons name="history" size={22} color="#fff" /></Pressable></Link></View>
     <View style={s.heading}><View style={{ flex: 1, gap: 8 }}><Text accessibilityRole="header" style={s.title}>Encontre seu{ '\n' }próximo caminho.</Text><Text style={s.subtitle}>Cada detalhe. Uma escolha melhor.</Text></View><Pressable onPress={() => search.current?.focus()} accessibilityRole="button" accessibilityLabel="Pesquisar veículos" style={s.circle}><MaterialIcons name="search" size={23} color="#fff" /></Pressable></View>
     <View style={s.search}><MaterialIcons name="search" size={21} color="#52728B" /><TextInput ref={search} value={query} onChangeText={value => { setQuery(value); }} placeholder="Buscar marca ou modelo" placeholderTextColor="#52728B" accessibilityLabel="Buscar marca ou modelo" style={s.input} returnKeyType="search" />{query ? <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Limpar busca"><MaterialIcons name="close" size={22} color="#52728B" /></Pressable> : <Link href="/(tabs)/formulario" asChild><Pressable accessibilityRole="button" accessibilityLabel="Abrir filtros da consulta" style={{ padding: 6 }}><MaterialIcons name="tune" size={20} color="#52728B" /></Pressable></Link>}</View>
