@@ -1,15 +1,17 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { ATRIBUTOS_PADRAO, Colors } from '@/src/theme/colors';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_PADRAO, GRUPOS_ATRIBUTO, atributosDoGrupo, type Atributo, type GrupoAtributo } from '@/src/data/atributos';
 
+const keysOf = (grupo: GrupoAtributo) => atributosDoGrupo(grupo).map(atributo => atributo.chave);
 const presets = [
-  { name: 'Completa', icon: 'dashboard' as const, keys: ATRIBUTOS_PADRAO, color: '#507EB0' },
-  { name: 'Desempenho', icon: 'speed' as const, keys: ['motor', 'potencia_cv', 'torque_nm', 'transmissao', 'tracao'], color: '#356599' },
-  { name: 'Economia', icon: 'eco' as const, keys: ['preco_base_brl', 'consumo_cidade', 'consumo_estrada'], color: '#447F9F' },
-  { name: 'Espaço', icon: 'straighten' as const, keys: ['peso_kg', 'comprimento_mm', 'largura_mm', 'altura_mm', 'capacidade_carga_kg'], color: '#647BB3' },
+  { name: 'Completa', icon: 'dashboard' as const, keys: ATRIBUTOS_PADRAO as string[], color: '#507EB0' },
+  { name: 'Desempenho', icon: 'speed' as const, keys: keysOf('desempenho'), color: '#356599' },
+  { name: 'Economia', icon: 'eco' as const, keys: keysOf('economia'), color: '#447F9F' },
+  { name: 'Espaço', icon: 'straighten' as const, keys: keysOf('espaco'), color: '#647BB3' },
 ];
-const labels: Record<string, string> = { motor: 'Motor', potencia_cv: 'Potência (cv)', torque_nm: 'Torque (Nm)', transmissao: 'Transmissão', tracao: 'Tração', peso_kg: 'Peso (kg)', comprimento_mm: 'Comprimento (mm)', largura_mm: 'Largura (mm)', altura_mm: 'Altura (mm)', capacidade_carga_kg: 'Capacidade de carga (kg)', preco_base_brl: 'Preço base (R$)', consumo_cidade: 'Consumo na cidade', consumo_estrada: 'Consumo na estrada' };
+const labelOf = (atributo: Atributo) => atributo.unidade ? `${atributo.rotulo} (${atributo.unidade})` : atributo.rotulo;
 type Props = { selected: string[]; onChange: (keys: string[]) => void; disabled?: boolean };
 
 export function AnalysisHero({ selected, onChange, disabled, search, onSearch }: Props & { search: string; onSearch: (value: string) => void }) {
@@ -27,7 +29,7 @@ export function AttributeSelector({ selected, onChange, disabled }: Props) {
   const [open, setOpen] = useState(false);
   return <View style={s.filter}>
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} onPress={() => setOpen(value => !value)} style={s.filterHeader}><View style={{ flex: 1, gap: 5 }}><Text style={s.filterTitle}>Personalize sua análise</Text><Text style={s.filterSubtitle}>{selected.length} atributos · toque para ajustar</Text></View><MaterialIcons name={open ? 'expand-less' : 'tune'} size={25} color={Colors.fordBlue} /></Pressable>
-    {open && <View style={{ gap: 18, paddingTop: 18 }}>{presets.slice(1).map(group => <View key={group.name} style={{ gap: 6 }}><Text style={s.group}>{group.name}</Text>{group.keys.map(key => <View key={key} style={s.row}><Text style={s.attribute}>{labels[key]}</Text><Switch accessibilityLabel={labels[key]} disabled={disabled} value={selected.includes(key)} onValueChange={value => onChange(value ? [...selected, key] : selected.filter(item => item !== key))} trackColor={{ false: '#D9E4EE', true: '#82AED7' }} thumbColor="#fff" /></View>)}</View>)}</View>}
+    {open && <View style={{ gap: 18, paddingTop: 18 }}>{(Object.keys(GRUPOS_ATRIBUTO) as GrupoAtributo[]).map(grupo => <View key={grupo} style={{ gap: 6 }}><Text style={s.group}>{GRUPOS_ATRIBUTO[grupo]}</Text>{atributosDoGrupo(grupo).map(atributo => <View key={atributo.chave} style={s.row}><Text style={s.attribute}>{labelOf(atributo)}</Text><Switch accessibilityLabel={labelOf(atributo)} disabled={disabled} value={selected.includes(atributo.chave)} onValueChange={value => onChange(value ? [...selected, atributo.chave] : selected.filter(item => item !== atributo.chave))} trackColor={{ false: '#D9E4EE', true: '#82AED7' }} thumbColor="#fff" /></View>)}</View>)}</View>}
   </View>;
 }
 const s = StyleSheet.create({

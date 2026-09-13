@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { querySpec } from '@/src/api/client';
+import { querySpec } from '@/src/api/specs';
+import { ApiError } from '@/src/api/http';
 import { saveToHistory } from '@/src/storage/history';
-import { ATRIBUTOS_PADRAO, Colors } from '@/src/theme/colors';
-import type { SpecResponse } from '@/src/types/spec';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_PADRAO } from '@/src/data/atributos';
+import type { Ficha } from '@/src/types/spec';
 import { VEHICLES } from '@/src/data/vehicles';
 import { PageIntro, ui } from './radar-ui';
 
@@ -20,7 +22,7 @@ export const COMPARISON_OPTIONS = [
   { brand: 'Chevrolet', model: 'S10', category: 'Picapes', image: require('../../assets/s10.jpeg') as number },
 ];
 
-export function ComparisonPicker({ onCompare }: { onCompare: (first: SpecResponse, second: SpecResponse) => void }) {
+export function ComparisonPicker({ onCompare }: { onCompare: (first: Ficha, second: Ficha) => void }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,13 +40,14 @@ export function ComparisonPicker({ onCompare }: { onCompare: (first: SpecRespons
     setError('');
     try {
       const chosen = selected.map(key => COMPARISON_OPTIONS.find(vehicle => `${vehicle.brand} ${vehicle.model}` === key)!);
-      const [first, second] = await Promise.all(chosen.map(vehicle => querySpec({ marca: vehicle.brand, modelo: vehicle.model, atributos: ATRIBUTOS_PADRAO })));
+      const [first, second] = await Promise.all(chosen.map(vehicle => querySpec({ marca: vehicle.brand, modelo: vehicle.model, versao: 'base', atributos: ATRIBUTOS_PADRAO })));
       if (!mounted.current) return;
       await saveToHistory(first);
       await saveToHistory(second);
       if (mounted.current) onCompare(first, second);
     } catch (failure) {
-      if (mounted.current) setError(failure instanceof Error ? failure.message : 'Não foi possível comparar. Tente novamente.');
+      const campo = failure instanceof ApiError ? Object.values(failure.camposInvalidos)[0] : undefined;
+      if (mounted.current) setError(campo ?? (failure instanceof Error ? failure.message : 'Não foi possível comparar. Tente novamente.'));
     } finally {
       pending.current = false;
       if (mounted.current) setLoading(false);

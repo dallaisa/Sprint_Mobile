@@ -3,7 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { loadHistory } from '@/src/storage/history';
-import type { SpecResponse } from '@/src/types/spec';
+import type { Ficha } from '@/src/types/spec';
+import { parseApiDate } from '@/src/api/adapters';
 import { Pill } from '@/src/components/radar-ui';
 import { HomeBackground } from '@/src/components/screen-background';
 import { VehicleCarousel } from '@/src/components/vehicle-carousel';
@@ -13,7 +14,7 @@ export default function HomeScreen() {
   const [category, setCategory] = useState('Todos');
   const [query, setQuery] = useState('');
   const router = useRouter();
-  const [history, setHistory] = useState<SpecResponse[]>([]);
+  const [history, setHistory] = useState<Ficha[]>([]);
   const search = useRef<TextInput>(null);
   useFocusEffect(useCallback(() => { let mounted = true; loadHistory().then(items => { if (mounted) setHistory(items); }).catch(() => { if (mounted) setHistory([]); }); return () => { mounted = false; }; }, []));
   const filtered = VEHICLES.filter(car => (category === 'Todos' || car.category === category) && `Ford ${car.model}`.toLowerCase().includes(query.toLowerCase().trim()));
@@ -29,7 +30,7 @@ export default function HomeScreen() {
     {!filtered.length && <View style={s.noResults}><Text style={s.darkTitle}>Nenhum modelo encontrado</Text><Text style={s.darkDescription}>Tente outra busca ou consulte pela API.</Text><Link href="/(tabs)/formulario" style={s.link}>Abrir consulta</Link></View>}
     <Link href="/api" asChild><Pressable accessibilityRole="button" style={s.recent}><View style={s.recentIcon}><MaterialIcons name="api" size={24} color="#315D7B" /></View><View style={{ flex: 1, gap: 4 }}><Text style={s.darkTitle}>API SpecRadar</Text><Text style={s.darkDescription}>Veja a fonte dos dados e abra uma consulta.</Text></View><MaterialIcons name="north-east" size={22} color="#315D7B" /></Pressable></Link>
     <View style={s.section}><Text style={s.sectionTitle}>Seu radar</Text><Link href="/(tabs)/historico" style={s.small}>Ver histórico ↗</Link></View>
-    {history.length > 0 ? history.slice(0, 2).map(item => <Link key={item.id} href={{ pathname: '/ficha/[id]', params: { id: item.id } }} asChild><Pressable accessibilityRole="button" style={s.recent}><View style={s.recentIcon}><MaterialIcons name="directions-car" size={24} color="#315D7B" /></View><View style={{ flex: 1, gap: 4 }}><Text style={s.darkTitle}>{item.marca} {item.modelo}</Text><Text style={s.darkDescription}>{item.versao} · {new Date(item.consultado_em).toLocaleDateString('pt-BR')}</Text></View><MaterialIcons name="north-east" size={22} color="#315D7B" /></Pressable></Link>) : <Link href="/(tabs)/chat" asChild><Pressable accessibilityRole="button" style={s.recent}><View style={s.recentIcon}><MaterialIcons name="chat-bubble-outline" size={24} color="#315D7B" /></View><View style={{ flex: 1, gap: 4 }}><Text style={s.darkTitle}>Vamos descobrir juntos?</Text><Text style={s.darkDescription}>Busque seu primeiro carro no chat.</Text></View><MaterialIcons name="north-east" size={22} color="#315D7B" /></Pressable></Link>}
+    {history.length > 0 ? history.slice(0, 2).map(item => <Link key={item.id} href={{ pathname: '/ficha/[id]', params: { id: item.id } }} asChild><Pressable accessibilityRole="button" style={s.recent}><View style={s.recentIcon}><MaterialIcons name="directions-car" size={24} color="#315D7B" /></View><View style={{ flex: 1, gap: 4 }}><Text style={s.darkTitle}>{item.marca} {item.modelo}</Text><Text style={s.darkDescription}>{item.versao} · {parseApiDate(item.consultado_em)?.toLocaleDateString('pt-BR') ?? ''}</Text></View><MaterialIcons name="north-east" size={22} color="#315D7B" /></Pressable></Link>) : <Link href="/(tabs)/chat" asChild><Pressable accessibilityRole="button" style={s.recent}><View style={s.recentIcon}><MaterialIcons name="chat-bubble-outline" size={24} color="#315D7B" /></View><View style={{ flex: 1, gap: 4 }}><Text style={s.darkTitle}>Vamos descobrir juntos?</Text><Text style={s.darkDescription}>Busque seu primeiro carro no chat.</Text></View><MaterialIcons name="north-east" size={22} color="#315D7B" /></Pressable></Link>}
     <View style={s.actions}>{[{ title: 'Análise guiada', text: 'Escolha os atributos', icon: 'tune' as const, href: '/(tabs)/formulario' as const }, { title: 'Comparar', text: 'Detalhes lado a lado', icon: 'compare-arrows' as const, href: '/(tabs)/comparar' as const }].map(action => <Link key={action.title} href={action.href} asChild><Pressable accessibilityRole="button" style={s.action}><MaterialIcons name={action.icon} size={24} color="#315D7B" /><Text style={s.darkTitle}>{action.title}</Text><Text style={s.darkDescription}>{action.text}</Text></Pressable></Link>)}</View>
     <Text style={s.footer}>SPECRADAR / INTELIGÊNCIA AUTOMOTIVA</Text>
   </ScrollView></HomeBackground>;

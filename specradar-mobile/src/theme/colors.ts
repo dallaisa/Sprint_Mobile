@@ -7,6 +7,7 @@ export const Colors = {
   textSecondary: '#5E7485',
   border: '#DCE7EF',
   confidenceAlta: '#2e7d32',
+  confidenceMedia: '#8a6a00',
   confidenceInferida: '#e65100',
   confidenceNaoEncontrado: '#9e9e9e',
   error: '#c62828',
@@ -14,19 +15,3 @@ export const Colors = {
   compareWinner: '#e8f5e9',
   compareLooser: '#ffffff',
 };
-
-export const ATRIBUTOS_PADRAO = [
-  'motor',
-  'potencia_cv',
-  'torque_nm',
-  'transmissao',
-  'tracao',
-  'peso_kg',
-  'comprimento_mm',
-  'largura_mm',
-  'altura_mm',
-  'capacidade_carga_kg',
-  'preco_base_brl',
-  'consumo_cidade',
-  'consumo_estrada',
-];

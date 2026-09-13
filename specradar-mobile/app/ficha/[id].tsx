@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { loadHistory } from '@/src/storage/history';
-import { SpecResponse } from '@/src/types/spec';
+import type { Ficha } from '@/src/types/spec';
 import { SpecCard } from '@/src/components/SpecCard';
 import { Colors } from '@/src/theme/colors';
 
 export default function FichaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [spec, setSpec] = useState<SpecResponse | null>(null);
+  const [spec, setSpec] = useState<Ficha | null>(null);
 
   useEffect(() => {
     loadHistory().then((h) => {

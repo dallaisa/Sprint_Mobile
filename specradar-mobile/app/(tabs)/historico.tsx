@@ -3,13 +3,14 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useRouter, useFocusEffect } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { loadHistory } from '@/src/storage/history';
-import type { SpecResponse } from '@/src/types/spec';
+import type { Ficha } from '@/src/types/spec';
+import { parseApiDate } from '@/src/api/adapters';
 import { HOME_GRADIENT } from '@/src/components/screen-background';
 import { Colors } from '@/src/theme/colors';
 import { EmptyPanel, Pill, ui } from '@/src/components/radar-ui';
 
 export default function HistoricoScreen() {
-  const [history, setHistory] = useState<SpecResponse[]>([]);
+  const [history, setHistory] = useState<Ficha[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('Resumo');
@@ -21,13 +22,13 @@ export default function HistoricoScreen() {
     setSelected(null);
     return () => { active = false; };
   }, []));
-  const fields = history.flatMap(item => Object.values(item.atributos));
-  const confirmed = fields.filter(field => field.confianca === 'alta' && field.valor !== null).length;
+  const fields = history.flatMap(item => item.campos);
+  const confirmed = fields.filter(field => field.confianca === 'ALTA' && field.valor !== null).length;
   const today = new Date().toLocaleDateString('pt-BR');
   const filtered = history.filter(item => {
     const matches = `${item.marca} ${item.modelo} ${item.versao}`.toLowerCase().includes(search.toLowerCase().trim());
-    const complete = Object.values(item.atributos).length > 0 && Object.values(item.atributos).every(field => field.valor !== null && field.confianca !== 'nao_encontrado');
-    return matches && (filter === 'Resumo' || filter === 'Todas' || (filter === 'Hoje' ? new Date(item.consultado_em).toLocaleDateString('pt-BR') === today : complete));
+    const complete = item.campos.length > 0 && item.campos.every(field => field.valor !== null && field.confianca !== 'NAO_ENCONTRADO');
+    return matches && (filter === 'Resumo' || filter === 'Todas' || (filter === 'Hoje' ? parseApiDate(item.consultado_em)?.toLocaleDateString('pt-BR') === today : complete));
   }).slice(0, filter === 'Resumo' ? 3 : undefined);
   function compare(id: string) {
     if (!selected) setSelected(id);
@@ -44,10 +45,10 @@ export default function HistoricoScreen() {
     {selected && <Pressable accessibilityRole="button" onPress={() => setSelected(null)} style={s.selection}><Text style={s.selectionText}>Escolha a segunda ficha para comparar · Cancelar ×</Text></Pressable>}
     {!!error && <Text accessibilityRole="alert" style={{ color: Colors.error }}>{error}</Text>}
     {filtered.map(item => {
-      const values = Object.values(item.atributos);
-      const available = values.filter(value => value.valor !== null && value.confianca !== 'nao_encontrado').length;
-      const trusted = values.filter(value => value.confianca === 'alta' && value.valor !== null).length;
-      const date = new Date(item.consultado_em);
+      const values = item.campos;
+      const available = values.filter(value => value.valor !== null && value.confianca !== 'NAO_ENCONTRADO').length;
+      const trusted = values.filter(value => value.confianca === 'ALTA' && value.valor !== null).length;
+      const date = parseApiDate(item.consultado_em);
       const percent = values.length ? Math.round(available / values.length * 100) : 0;
       return <View key={item.id} style={[s.card, selected === item.id && s.selectedCard]}>
         <View style={s.cardTop}>
@@ -56,7 +57,7 @@ export default function HistoricoScreen() {
         </View>
         <View style={s.cardSurface}>
           <Pressable accessibilityRole="button" accessibilityLabel={`Abrir ficha de ${item.marca} ${item.modelo}`} onPress={() => router.push({ pathname: '/ficha/[id]', params: { id: item.id } })} style={s.cardBody}>
-            <Text style={s.cardTitle}>{item.marca} {item.modelo}</Text><Text style={s.version}>{item.versao} · {date.toLocaleDateString('pt-BR')}</Text>
+            <Text style={s.cardTitle}>{item.marca} {item.modelo}</Text><Text style={s.version}>{item.versao}{date ? ` · ${date.toLocaleDateString('pt-BR')}` : ''}</Text>
           </Pressable>
           <View style={s.cardBottom}><View style={s.cardMeta}><MaterialIcons name="verified" size={18} color="#fff" /><Text style={s.metaText}>{available}/{values.length} atributos · {trusted} verificados</Text></View><Pressable accessibilityRole="button" accessibilityLabel={`Comparar ${item.modelo}`} accessibilityState={{ selected: selected === item.id }} onPress={() => compare(item.id)} style={s.compareButton}><MaterialIcons name={selected === item.id ? 'check' : 'add'} size={23} color="#fff" /></Pressable></View>
         </View>

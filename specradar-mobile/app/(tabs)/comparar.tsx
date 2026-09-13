@@ -5,37 +5,37 @@ import { useLocalSearchParams } from 'expo-router';
 import { EmptyPanel } from '@/src/components/radar-ui';
 import { ComparisonPicker } from '@/src/components/comparison-picker';
 import { loadHistory } from '@/src/storage/history';
-import { SpecResponse, SpecField } from '@/src/types/spec';
+import type { CampoSpec } from '@/src/types/api';
+import type { Ficha } from '@/src/types/spec';
+import { API_CONFIGURED } from '@/src/api/http';
+import { buscarAtributo, rotuloAtributo } from '@/src/data/atributos';
 import { HOME_GRADIENT } from '@/src/components/screen-background';
 
+// Grupos com valor numérico comparável; o vencedor vindo da API entra na fase 7.
 const groups = [
-  { label: 'Desempenho', keys: ['potencia_cv', 'torque_nm'] },
-  { label: 'Economia', keys: ['consumo_cidade', 'consumo_estrada', 'preco_base_brl'] },
-  { label: 'Espaço', keys: ['capacidade_carga_kg', 'comprimento_mm', 'largura_mm', 'altura_mm', 'peso_kg'] },
+  { label: 'Desempenho', keys: ['potencia', 'torque', 'aceleracao'] },
+  { label: 'Economia', keys: ['preco', 'consumo'] },
 ];
-const labels: Record<string, [string, string]> = {
-  potencia_cv: ['Potência', 'cv'], torque_nm: ['Torque', 'Nm'], consumo_cidade: ['Consumo na cidade', 'km/l'], consumo_estrada: ['Consumo na estrada', 'km/l'], preco_base_brl: ['Preço base', 'R$'], capacidade_carga_kg: ['Capacidade de carga', 'kg'], comprimento_mm: ['Comprimento', 'mm'], largura_mm: ['Largura', 'mm'], altura_mm: ['Altura', 'mm'], peso_kg: ['Peso', 'kg'], motor: ['Motor', ''], transmissao: ['Transmissão', ''], tracao: ['Tração', ''],
-};
+const detailKeys = ['motor', 'transmissao', 'tracao', 'dimensoes'];
 const accents = ['#96B8E6', '#B9DCD9'];
-function numeric(field?: SpecField): number | null {
-  if (!field || field.valor === null || field.confianca === 'nao_encontrado') return null;
-  if (typeof field.valor === 'number') return Number.isFinite(field.valor) ? field.valor : null;
+function numeric(field?: CampoSpec): number | null {
+  if (!field || field.valor === null || field.confianca === 'NAO_ENCONTRADO') return null;
   let value = field.valor.trim().replace(/R\$|\s/g, '');
   if (value.includes(',')) value = value.replace(/\./g, '').replace(',', '.');
   else if (/^\d{1,3}(\.\d{3})+(?:[^\d]|$)/.test(value)) value = value.replace(/\./g, '');
   const match = value.match(/^[-+]?\d+(?:\.\d+)?/);
   return match && Number.isFinite(Number(match[0])) ? Number(match[0]) : null;
 }
-function confidence(field?: SpecField) {
-  return !field || field.valor === null || field.confianca === 'nao_encontrado' ? 'Sem dado' : field.confianca === 'alta' ? 'Alta confiança' : 'Estimativa';
+function confidence(field?: CampoSpec) {
+  return !field || field.valor === null || field.confianca === 'NAO_ENCONTRADO' ? 'Sem dado' : field.confianca === 'ALTA' ? 'Alta confiança' : 'Estimativa';
 }
 export default function CompararScreen() {
   const insets = useSafeAreaInsets();
   const [category, setCategory] = useState(0);
   const [details, setDetails] = useState(false);
   const { v1, v2 } = useLocalSearchParams<{ v1?: string; v2?: string }>();
-  const [spec1, setSpec1] = useState<SpecResponse | null>(null);
-  const [spec2, setSpec2] = useState<SpecResponse | null>(null);
+  const [spec1, setSpec1] = useState<Ficha | null>(null);
+  const [spec2, setSpec2] = useState<Ficha | null>(null);
   const [loading, setLoading] = useState(true);
   const [choosing, setChoosing] = useState(!v1 || !v2);
 
@@ -69,28 +69,29 @@ export default function CompararScreen() {
   </View></View>;
 
   const specs = [spec1, spec2];
-  const fields = specs.flatMap(spec => Object.values(spec.atributos));
-  const available = fields.filter(field => field.valor !== null && field.confianca !== 'nao_encontrado').length;
-  const trusted = fields.filter(field => field.valor !== null && field.confianca === 'alta').length;
+  const fields = specs.flatMap(spec => spec.campos);
+  const available = fields.filter(field => field.valor !== null && field.confianca !== 'NAO_ENCONTRADO').length;
+  const trusted = fields.filter(field => field.valor !== null && field.confianca === 'ALTA').length;
   const coverage = fields.length ? Math.round(available / fields.length * 100) : 0;
   return <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]}>
     <View style={styles.top}><Text style={styles.eyebrow}>SEU RADAR / COMPARAÇÃO</Text><Text style={styles.eyebrow}>02 MODELOS</Text></View>
     <Text accessibilityRole="header" style={styles.title}>Sua próxima escolha.</Text>
     <Pressable accessibilityRole="button" onPress={() => setChoosing(true)} style={styles.chooseButton}><Text style={styles.chooseLabel}>← Escolher outros carros</Text></Pressable>
-    {!process.env.EXPO_PUBLIC_API_BASE_URL && <Text style={styles.demo}>Demonstração · os dois modelos usam dados de exemplo da Ranger Raptor.</Text>}
+    {!API_CONFIGURED && <Text style={styles.demo}>Demonstração · os dois modelos usam dados de exemplo da Ranger Raptor.</Text>}
     <View style={styles.hero}><Text style={styles.heroEyebrow}>LADO A LADO</Text><Text style={styles.heroTitle}>Menos dúvida.{'\n'}Mais clareza.</Text><Text style={styles.heroDescription}>Explore um assunto por vez e encontre as diferenças.</Text></View>
     <View style={styles.vehicles}>{specs.map((spec, index) => <View key={index} style={[styles.vehicle, { borderTopColor: accents[index] }]}><Text style={[styles.eyebrow, { color: accents[index] }]}>{index + 1 < 10 ? '0' : ''}{index + 1} / {spec.marca}</Text><Text style={styles.model}>{spec.modelo}</Text><Text style={styles.muted}>{spec.versao || 'Versão não informada'}</Text></View>)}</View>
     <View style={styles.tabs}>{groups.map((group, index) => <Pressable key={group.label} accessibilityRole="button" accessibilityState={{ selected: category === index }} onPress={() => setCategory(index)} style={[styles.tab, category === index && styles.activeTab]}><Text style={[styles.tabLabel, category === index && styles.activeTabLabel]}>{group.label}</Text></Pressable>)}</View>
     {groups[category].keys.map(key => <Metric key={key} attribute={key} specs={specs} />)}
     <View style={styles.coverage}><View style={styles.coverageCopy}><Text style={styles.sectionTitle}>Por dentro dos dados</Text><Text style={styles.muted}>{available} de {fields.length} atributos disponíveis</Text><Text style={styles.muted}>{trusted} com alta confiança</Text></View><View style={styles.ring}><Text selectable style={styles.ringNumber}>{coverage}%</Text><Text style={styles.ringLabel}>preenchido</Text></View><View style={styles.coverageTrack}><View style={[styles.coverageFill, { width: `${coverage}%` }]} /></View></View>
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: details }} onPress={() => setDetails(value => !value)} style={styles.detailsButton}><Text style={styles.sectionTitle}>Motor, transmissão e tração</Text><Text style={styles.toggle}>{details ? '−' : '+'}</Text></Pressable>
-    {details && ['motor', 'transmissao', 'tracao'].map(key => <View key={key} style={styles.detailCard}><Text style={styles.sectionTitle}>{labels[key][0]}</Text>{specs.map((spec, index) => <View key={index} style={styles.detailRow}><Text style={[styles.detailName, { color: accents[index] }]}>{spec.modelo}</Text><Text selectable style={styles.detailValue}>{spec.atributos[key]?.valor ?? 'Não informado'}</Text><Text style={styles.muted}>{confidence(spec.atributos[key])}</Text></View>)}</View>)}
+    {details && detailKeys.map(key => <View key={key} style={styles.detailCard}><Text style={styles.sectionTitle}>{rotuloAtributo(key)}</Text>{specs.map((spec, index) => <View key={index} style={styles.detailRow}><Text style={[styles.detailName, { color: accents[index] }]}>{spec.modelo}</Text><Text selectable style={styles.detailValue}>{spec.atributos[key]?.valor ?? 'Não informado'}</Text><Text style={styles.muted}>{confidence(spec.atributos[key])}</Text></View>)}</View>)}
   </ScrollView></View>;
 }
-function Metric({ attribute, specs }: { attribute: string; specs: SpecResponse[] }) {
+function Metric({ attribute, specs }: { attribute: string; specs: Ficha[] }) {
   const values = specs.map(spec => numeric(spec.atributos[attribute]));
   const maximum = Math.max(...values.map(value => Math.max(0, value ?? 0)), 1);
-  const [label, unit] = labels[attribute];
+  const label = rotuloAtributo(attribute);
+  const unit = buscarAtributo(attribute)?.unidade ?? '';
   const difference = values[0] !== null && values[1] !== null ? Math.abs(values[0] - values[1]) : null;
   return <View style={styles.metric}><View style={styles.metricHeading}><Text style={styles.sectionTitle}>{label}</Text><Text style={styles.muted}>{unit}</Text></View>
     <View style={styles.numbers}>{specs.map((spec, index) => <View key={index} style={[styles.numberCard, { backgroundColor: accents[index] }]}><Text style={styles.numberName}>{spec.modelo}</Text><Text selectable adjustsFontSizeToFit numberOfLines={1} style={styles.bigNumber}>{values[index] === null ? '—' : values[index]!.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</Text><Text style={styles.numberConfidence}>{confidence(spec.atributos[attribute])}</Text></View>)}</View>

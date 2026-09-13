@@ -1,16 +1,16 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { ATRIBUTOS_PADRAO, Colors } from '@/src/theme/colors';
-import type { SpecResponse } from '@/src/types/spec';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_PADRAO, rotuloAtributo } from '@/src/data/atributos';
+import type { Ficha } from '@/src/types/spec';
 import { HOME_GRADIENT } from './screen-background';
 
-const labels: Record<string, string> = { motor: 'Motor', potencia_cv: 'Potência', torque_nm: 'Torque', transmissao: 'Transmissão', tracao: 'Tração', peso_kg: 'Peso', comprimento_mm: 'Comprimento', largura_mm: 'Largura', altura_mm: 'Altura', capacidade_carga_kg: 'Carga', preco_base_brl: 'Preço base', consumo_cidade: 'Consumo urbano', consumo_estrada: 'Consumo rodoviário' };
-export function CoverageChart({ history }: { history: SpecResponse[] }) {
+export function CoverageChart({ history }: { history: Ficha[] }) {
   const [mode, setMode] = useState('Disponíveis');
-  const [selected, setSelected] = useState('potencia_cv');
-  const counts = ATRIBUTOS_PADRAO.map(key => history.filter(item => { const field = item.atributos[key]; return field && field.valor !== null && (mode === 'Alta confiança' ? field.confianca === 'alta' : field.confianca !== 'nao_encontrado'); }).length);
-  const value = counts[ATRIBUTOS_PADRAO.indexOf(selected)];
-  return <View style={s.panel}><View style={s.heading}><Text accessibilityRole="header" style={s.title}>Por dentro dos dados</Text><Text style={s.count}>{history.length} fichas</Text></View><Text style={s.description}>Cobertura dos atributos no seu histórico</Text><View style={s.filters}>{['Disponíveis', 'Alta confiança'].map(label => <Pressable key={label} accessibilityRole="button" accessibilityState={{ selected: mode === label }} onPress={() => setMode(label)} style={[s.filter, mode === label && s.filterActive]}><Text style={[s.filterText, mode === label && s.filterTextActive]}>{label}</Text></Pressable>)}</View><View style={s.bars}>{ATRIBUTOS_PADRAO.map((key, index) => <Pressable key={key} accessibilityRole="button" accessibilityLabel={`${labels[key]}: ${counts[index]} de ${history.length} fichas`} accessibilityState={{ selected: key === selected }} onPress={() => setSelected(key)} style={s.barTouch}><View style={[s.bar, { height: counts[index] ? 10 + (counts[index] / Math.max(history.length, 1)) * 65 : 3, backgroundColor: key === selected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.55)' }]} /><View style={[s.dot, key === selected && { backgroundColor: '#FFFFFF' }]} /></Pressable>)}</View><View style={s.caption}><Text style={s.label}>{labels[selected]}</Text><Text selectable style={s.value}>{value} / {history.length} fichas</Text></View><Text style={s.note}>{history.length ? 'Toque nas barras para explorar cada atributo.' : 'Suas consultas vão preencher este gráfico. Comece pelo chat.'}</Text></View>;
+  const [selected, setSelected] = useState<string>('potencia');
+  const counts = ATRIBUTOS_PADRAO.map(key => history.filter(item => { const field = item.atributos[key]; return field && field.valor !== null && (mode === 'Alta confiança' ? field.confianca === 'ALTA' : field.confianca !== 'NAO_ENCONTRADO'); }).length);
+  const value = counts[ATRIBUTOS_PADRAO.indexOf(selected as (typeof ATRIBUTOS_PADRAO)[number])];
+  return <View style={s.panel}><View style={s.heading}><Text accessibilityRole="header" style={s.title}>Por dentro dos dados</Text><Text style={s.count}>{history.length} fichas</Text></View><Text style={s.description}>Cobertura dos atributos no seu histórico</Text><View style={s.filters}>{['Disponíveis', 'Alta confiança'].map(label => <Pressable key={label} accessibilityRole="button" accessibilityState={{ selected: mode === label }} onPress={() => setMode(label)} style={[s.filter, mode === label && s.filterActive]}><Text style={[s.filterText, mode === label && s.filterTextActive]}>{label}</Text></Pressable>)}</View><View style={s.bars}>{ATRIBUTOS_PADRAO.map((key, index) => <Pressable key={key} accessibilityRole="button" accessibilityLabel={`${rotuloAtributo(key)}: ${counts[index]} de ${history.length} fichas`} accessibilityState={{ selected: key === selected }} onPress={() => setSelected(key)} style={s.barTouch}><View style={[s.bar, { height: counts[index] ? 10 + (counts[index] / Math.max(history.length, 1)) * 65 : 3, backgroundColor: key === selected ? '#FFFFFF' : 'rgba(255, 255, 255, 0.55)' }]} /><View style={[s.dot, key === selected && { backgroundColor: '#FFFFFF' }]} /></Pressable>)}</View><View style={s.caption}><Text style={s.label}>{rotuloAtributo(selected)}</Text><Text selectable style={s.value}>{value} / {history.length} fichas</Text></View><Text style={s.note}>{history.length ? 'Toque nas barras para explorar cada atributo.' : 'Suas consultas vão preencher este gráfico. Comece pelo chat.'}</Text></View>;
 }
 const s = StyleSheet.create({
   panel: { width: '100%', minWidth: 0, backgroundColor: '#507EB0', experimental_backgroundImage: HOME_GRADIENT, borderRadius: 28, overflow: 'hidden', padding: 20, gap: 14 },

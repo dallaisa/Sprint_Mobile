@@ -6,7 +6,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { CoverageChart } from '@/src/components/coverage-chart';
 import { loadHistory } from '@/src/storage/history';
-import type { SpecResponse } from '@/src/types/spec';
+import type { Ficha } from '@/src/types/spec';
+import { ATRIBUTOS_PADRAO, MAX_ATRIBUTOS } from '@/src/data/atributos';
 import {
   View,
   Text,
@@ -18,12 +19,16 @@ import {
   Platform,
 } from 'react-native';
 import { useSpecQuery } from '@/src/hooks/useSpecQuery';
-import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
+import { Colors } from '@/src/theme/colors';
 import { LoadingSpinner } from '@/src/components/LoadingSpinner';
 import { ErrorMessage } from '@/src/components/ErrorMessage';
 import { SpecCard } from '@/src/components/SpecCard';
 
-const MARCA_REGEX = /^[A-Za-zÀ-ú\s\-]{2,40}$/;
+// Mesmas regras do SpecQueryRequest da API (sem versão, o app envia "base").
+const MARCA_REGEX = /^[a-zA-ZÀ-ÿ\s-]{2,50}$/;
+const MODELO_REGEX = /^[a-zA-ZÀ-ÿ\s-]{2,80}$/;
+const VERSAO_REGEX = /^[a-zA-ZÀ-ÿ0-9\s.-]{2,80}$/;
+const VERSAO_PADRAO = 'base';
 
 export default function FormularioScreen() {
   const params = useLocalSearchParams<{ marca?: string; modelo?: string }>();
@@ -32,9 +37,10 @@ export default function FormularioScreen() {
   const [modelo, setModelo] = useState('');
   const [versao, setVersao] = useState('');
   const [atributosSelecionados, setAtributosSelecionados] = useState<string[]>([...ATRIBUTOS_PADRAO]);
-  const [erros, setErros] = useState<Record<string, string>>({});
-  const { data, loading, error, execute, reset } = useSpecQuery();
-  const [history, setHistory] = useState<SpecResponse[]>([]);
+  const [errosLocais, setErros] = useState<Record<string, string>>({});
+  const { data, loading, error, camposInvalidos, execute, retry, reset } = useSpecQuery();
+  const erros = { ...camposInvalidos, ...errosLocais };
+  const [history, setHistory] = useState<Ficha[]>([]);
   useFocusEffect(useCallback(() => {
     let active = true;
     loadHistory().then(items => { if (active) setHistory(items); }).catch(() => { if (active) setHistory([]); });
@@ -53,17 +59,18 @@ export default function FormularioScreen() {
 
   function validar(): boolean {
     const novosErros: Record<string, string> = {};
-    if (!MARCA_REGEX.test(marca)) novosErros.marca = 'Marca inválida (2–40 letras).';
-    if (modelo.length < 2 || modelo.length > 80) novosErros.modelo = 'Modelo: 2 a 80 caracteres.';
-    if (versao && (versao.length < 1 || versao.length > 20)) novosErros.versao = 'Versão: 1 a 20 caracteres.';
+    if (!MARCA_REGEX.test(marca.trim())) novosErros.marca = 'Marca: 2 a 50 letras (espaços e hífens são aceitos).';
+    if (!MODELO_REGEX.test(modelo.trim())) novosErros.modelo = 'Modelo: 2 a 80 letras, sem números (regra da API).';
+    if (versao.trim() && !VERSAO_REGEX.test(versao.trim())) novosErros.versao = 'Versão: 2 a 80 caracteres entre letras, números, espaço, hífen e ponto.';
     if (atributosSelecionados.length === 0) novosErros.atributos = 'Selecione ao menos 1 atributo.';
+    if (atributosSelecionados.length > MAX_ATRIBUTOS) novosErros.atributos = `Selecione no máximo ${MAX_ATRIBUTOS} atributos.`;
     setErros(novosErros);
     return Object.keys(novosErros).length === 0;
   }
 
   function handleConsultar() {
     if (!validar()) return;
-    execute({ marca: marca.trim(), modelo: modelo.trim(), versao: versao.trim() || undefined, atributos: atributosSelecionados });
+    execute({ marca: marca.trim(), modelo: modelo.trim(), versao: versao.trim() || VERSAO_PADRAO, atributos: atributosSelecionados });
   }
 
   function handleNovo() {
@@ -110,7 +117,7 @@ export default function FormularioScreen() {
               label="Versão (opcional)"
               value={versao}
               onChangeText={setVersao}
-              placeholder="Ex: 2024 SR"
+              placeholder="Ex: XLT · em branco consulta a versão base"
               erro={erros.versao}
               editable={!loading}
             />
@@ -132,13 +139,14 @@ export default function FormularioScreen() {
           </TouchableOpacity>
         )}
 
-        {loading && <LoadingSpinner />}
+        {loading && <LoadingSpinner mensagem="Buscando a ficha… Na primeira consulta de um carro, a API pesquisa as especificações e pode levar até 1 minuto." />}
 
         {error && !loading && (
-          <ErrorMessage erro={error} onRetry={handleConsultar} />
+          <ErrorMessage erro={error} onRetry={retry} />
         )}
 
         <CoverageChart history={history} />
+        {data && <Text style={styles.origem}>{data.cache_hit ? 'Ficha já salva no SpecRadar · resposta do banco' : 'Ficha pesquisada agora pela API'}</Text>}
         {data && <SpecCard spec={data} atributosFiltro={atributosSelecionados} />}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -182,6 +190,7 @@ const styles = StyleSheet.create({
   },
   inputErro: { borderColor: Colors.error },
   erroTexto: { color: Colors.error, fontSize: 12 },
+  origem: { color: Colors.textSecondary, fontSize: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 12,

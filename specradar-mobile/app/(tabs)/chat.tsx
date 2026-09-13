@@ -6,7 +6,8 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useIsFocused } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { useSpecQuery } from '@/src/hooks/useSpecQuery';
-import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_PADRAO } from '@/src/data/atributos';
 import { LoadingSpinner } from '@/src/components/LoadingSpinner';
 import { ErrorMessage } from '@/src/components/ErrorMessage';
 import { ChatSpecResult } from '@/src/components/chat-spec-result';
@@ -35,7 +36,8 @@ export default function ChatScreen() {
     const parts = text.trim().split(/\s+/);
     setSent(text.trim());
     setInput('');
-    execute({ marca: parts[0], modelo: parts.slice(1).join(' ') || parts[0], atributos: ATRIBUTOS_PADRAO });
+    // Provisório até a fase 6, quando o chat passa a usar POST /chat/message.
+    execute({ marca: parts[0], modelo: parts.slice(1).join(' ') || parts[0], versao: 'base', atributos: ATRIBUTOS_PADRAO });
   }
   return <HomeBackground><KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={headerHeight}>
     {isFocused && <StatusBar style="dark" />}
