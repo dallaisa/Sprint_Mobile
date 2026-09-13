@@ -1,40 +1,38 @@
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { EmptyPanel, PageIntro } from '@/src/components/radar-ui';
-import { PhotoBackground } from '@/src/components/screen-background';
-import { ComparisonPicker } from '@/src/components/comparison-picker';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import { EmptyPanel } from '@/src/components/radar-ui';
+import { ComparisonPicker } from '@/src/components/comparison-picker';
 import { loadHistory } from '@/src/storage/history';
 import { SpecResponse, SpecField } from '@/src/types/spec';
-import { Colors, ATRIBUTOS_PADRAO } from '@/src/theme/colors';
-import { ConfidenceBadge } from '@/src/components/ConfidenceBadge';
+import { HOME_GRADIENT } from '@/src/components/screen-background';
 
-const MAIOR_MELHOR = new Set([
-  'potencia_cv', 'torque_nm', 'capacidade_carga_kg',
-  'consumo_cidade', 'consumo_estrada',
-]);
-const MENOR_MELHOR = new Set(['peso_kg', 'preco_base_brl']);
-
-function extrairNumero(valor: string | number | null): number | null {
-  if (valor === null) return null;
-  if (typeof valor === 'number') return valor;
-  const match = valor.replace(',', '.').match(/[\d.]+/);
-  return match ? parseFloat(match[0]) : null;
+const groups = [
+  { label: 'Desempenho', keys: ['potencia_cv', 'torque_nm'] },
+  { label: 'Economia', keys: ['consumo_cidade', 'consumo_estrada', 'preco_base_brl'] },
+  { label: 'Espaço', keys: ['capacidade_carga_kg', 'comprimento_mm', 'largura_mm', 'altura_mm', 'peso_kg'] },
+];
+const labels: Record<string, [string, string]> = {
+  potencia_cv: ['Potência', 'cv'], torque_nm: ['Torque', 'Nm'], consumo_cidade: ['Consumo na cidade', 'km/l'], consumo_estrada: ['Consumo na estrada', 'km/l'], preco_base_brl: ['Preço base', 'R$'], capacidade_carga_kg: ['Capacidade de carga', 'kg'], comprimento_mm: ['Comprimento', 'mm'], largura_mm: ['Largura', 'mm'], altura_mm: ['Altura', 'mm'], peso_kg: ['Peso', 'kg'], motor: ['Motor', ''], transmissao: ['Transmissão', ''], tracao: ['Tração', ''],
+};
+const accents = ['#96B8E6', '#B9DCD9'];
+function numeric(field?: SpecField): number | null {
+  if (!field || field.valor === null || field.confianca === 'nao_encontrado') return null;
+  if (typeof field.valor === 'number') return Number.isFinite(field.valor) ? field.valor : null;
+  let value = field.valor.trim().replace(/R\$|\s/g, '');
+  if (value.includes(',')) value = value.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+(?:[^\d]|$)/.test(value)) value = value.replace(/\./g, '');
+  const match = value.match(/^[-+]?\d+(?:\.\d+)?/);
+  return match && Number.isFinite(Number(match[0])) ? Number(match[0]) : null;
 }
-
-function calcularVencedor(chave: string, f1: SpecField, f2: SpecField): 'v1' | 'v2' | null {
-  if (f1.confianca === 'nao_encontrado' || f2.confianca === 'nao_encontrado') return null;
-  const n1 = extrairNumero(f1.valor);
-  const n2 = extrairNumero(f2.valor);
-  if (n1 === null || n2 === null || n1 === n2) return null;
-  if (MAIOR_MELHOR.has(chave)) return n1 > n2 ? 'v1' : 'v2';
-  if (MENOR_MELHOR.has(chave)) return n1 < n2 ? 'v1' : 'v2';
-  return null;
+function confidence(field?: SpecField) {
+  return !field || field.valor === null || field.confianca === 'nao_encontrado' ? 'Sem dado' : field.confianca === 'alta' ? 'Alta confiança' : 'Estimativa';
 }
-
 export default function CompararScreen() {
   const insets = useSafeAreaInsets();
+  const [category, setCategory] = useState(0);
+  const [details, setDetails] = useState(false);
   const { v1, v2 } = useLocalSearchParams<{ v1?: string; v2?: string }>();
   const [spec1, setSpec1] = useState<SpecResponse | null>(null);
   const [spec2, setSpec2] = useState<SpecResponse | null>(null);
@@ -60,135 +58,52 @@ export default function CompararScreen() {
 
   if (choosing) {
     return (
-      <PhotoBackground><ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}>
+      <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}>
         <ComparisonPicker onCompare={(first, second) => { setSpec1(first); setSpec2(second); setLoading(false); setChoosing(false); }} />
-      </ScrollView></PhotoBackground>
+      </ScrollView></View>
     );
   }
 
-  if (!spec1 || !spec2) return <PhotoBackground><View style={styles.vazio}>
+  if (!spec1 || !spec2) return <View style={styles.screen}><View style={styles.vazio}>
     {loading ? <ActivityIndicator color="#fff" size="large" accessibilityLabel="Carregando comparação" /> : <EmptyPanel icon="search-off" title="Vamos selecionar novamente?" description="Uma das fichas não está mais disponível no histórico. Escolha dois veículos para continuar." href="/(tabs)/historico" action="Abrir histórico" />}
-  </View></PhotoBackground>;
+  </View></View>;
 
-  const atributos = ATRIBUTOS_PADRAO.filter(
-    (a) => a in spec1.atributos && a in spec2.atributos
-  );
-
-  return (
-    <PhotoBackground><ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.container} contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}>
-      <Pressable accessibilityRole="button" onPress={() => setChoosing(true)} style={styles.chooseButton}><Text style={styles.chooseLabel}>← Escolher outros carros</Text></Pressable>
-      {!process.env.EXPO_PUBLIC_API_BASE_URL && <Text style={styles.demo}>Demonstração · valores de exemplo da Ranger Raptor.</Text>}
-      <View style={styles.intro}><PageIntro eyebrow="LADO A LADO" title="O que faz a diferença?" description="Confira os valores e a confiança de cada atributo antes de escolher." /></View>
-      <View style={styles.headerRow}>
-        <View style={styles.colunaChave} />
-        <VeiculoHeader spec={spec1} />
-        <VeiculoHeader spec={spec2} />
-      </View>
-
-      {/* Atributos */}
-      {atributos.map((chave) => {
-        const f1 = spec1.atributos[chave];
-        const f2 = spec2.atributos[chave];
-        const venc = calcularVencedor(chave, f1, f2);
-        return (
-          <View key={chave} style={styles.linha}>
-            <Text style={styles.chave}>{chave.replace(/_/g, '\n')}</Text>
-            <CelulaAtributo campo={f1} vencendo={venc === 'v1'} />
-            <CelulaAtributo campo={f2} vencendo={venc === 'v2'} />
-          </View>
-        );
-      })}
-    </ScrollView></PhotoBackground>
-  );
+  const specs = [spec1, spec2];
+  const fields = specs.flatMap(spec => Object.values(spec.atributos));
+  const available = fields.filter(field => field.valor !== null && field.confianca !== 'nao_encontrado').length;
+  const trusted = fields.filter(field => field.valor !== null && field.confianca === 'alta').length;
+  const coverage = fields.length ? Math.round(available / fields.length * 100) : 0;
+  return <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]}>
+    <View style={styles.top}><Text style={styles.eyebrow}>SEU RADAR / COMPARAÇÃO</Text><Text style={styles.eyebrow}>02 MODELOS</Text></View>
+    <Text accessibilityRole="header" style={styles.title}>Sua próxima escolha.</Text>
+    <Pressable accessibilityRole="button" onPress={() => setChoosing(true)} style={styles.chooseButton}><Text style={styles.chooseLabel}>← Escolher outros carros</Text></Pressable>
+    {!process.env.EXPO_PUBLIC_API_BASE_URL && <Text style={styles.demo}>Demonstração · os dois modelos usam dados de exemplo da Ranger Raptor.</Text>}
+    <View style={styles.hero}><Text style={styles.heroEyebrow}>LADO A LADO</Text><Text style={styles.heroTitle}>Menos dúvida.{'\n'}Mais clareza.</Text><Text style={styles.heroDescription}>Explore um assunto por vez e encontre as diferenças.</Text></View>
+    <View style={styles.vehicles}>{specs.map((spec, index) => <View key={index} style={[styles.vehicle, { borderTopColor: accents[index] }]}><Text style={[styles.eyebrow, { color: accents[index] }]}>{index + 1 < 10 ? '0' : ''}{index + 1} / {spec.marca}</Text><Text style={styles.model}>{spec.modelo}</Text><Text style={styles.muted}>{spec.versao || 'Versão não informada'}</Text></View>)}</View>
+    <View style={styles.tabs}>{groups.map((group, index) => <Pressable key={group.label} accessibilityRole="button" accessibilityState={{ selected: category === index }} onPress={() => setCategory(index)} style={[styles.tab, category === index && styles.activeTab]}><Text style={[styles.tabLabel, category === index && styles.activeTabLabel]}>{group.label}</Text></Pressable>)}</View>
+    {groups[category].keys.map(key => <Metric key={key} attribute={key} specs={specs} />)}
+    <View style={styles.coverage}><View style={styles.coverageCopy}><Text style={styles.sectionTitle}>Por dentro dos dados</Text><Text style={styles.muted}>{available} de {fields.length} atributos disponíveis</Text><Text style={styles.muted}>{trusted} com alta confiança</Text></View><View style={styles.ring}><Text selectable style={styles.ringNumber}>{coverage}%</Text><Text style={styles.ringLabel}>preenchido</Text></View><View style={styles.coverageTrack}><View style={[styles.coverageFill, { width: `${coverage}%` }]} /></View></View>
+    <Pressable accessibilityRole="button" accessibilityState={{ expanded: details }} onPress={() => setDetails(value => !value)} style={styles.detailsButton}><Text style={styles.sectionTitle}>Motor, transmissão e tração</Text><Text style={styles.toggle}>{details ? '−' : '+'}</Text></Pressable>
+    {details && ['motor', 'transmissao', 'tracao'].map(key => <View key={key} style={styles.detailCard}><Text style={styles.sectionTitle}>{labels[key][0]}</Text>{specs.map((spec, index) => <View key={index} style={styles.detailRow}><Text style={[styles.detailName, { color: accents[index] }]}>{spec.modelo}</Text><Text selectable style={styles.detailValue}>{spec.atributos[key]?.valor ?? 'Não informado'}</Text><Text style={styles.muted}>{confidence(spec.atributos[key])}</Text></View>)}</View>)}
+  </ScrollView></View>;
 }
-
-function VeiculoHeader({ spec }: { spec: SpecResponse }) {
-  return (
-    <View style={styles.colunaHeader}>
-      <Text style={styles.headerMarca}>{spec.marca}</Text>
-      <Text style={styles.headerModelo} numberOfLines={2}>{spec.modelo}</Text>
-      <Text style={styles.headerVersao}>{spec.versao}</Text>
-    </View>
-  );
+function Metric({ attribute, specs }: { attribute: string; specs: SpecResponse[] }) {
+  const values = specs.map(spec => numeric(spec.atributos[attribute]));
+  const maximum = Math.max(...values.map(value => Math.max(0, value ?? 0)), 1);
+  const [label, unit] = labels[attribute];
+  const difference = values[0] !== null && values[1] !== null ? Math.abs(values[0] - values[1]) : null;
+  return <View style={styles.metric}><View style={styles.metricHeading}><Text style={styles.sectionTitle}>{label}</Text><Text style={styles.muted}>{unit}</Text></View>
+    <View style={styles.numbers}>{specs.map((spec, index) => <View key={index} style={[styles.numberCard, { backgroundColor: accents[index] }]}><Text style={styles.numberName}>{spec.modelo}</Text><Text selectable adjustsFontSizeToFit numberOfLines={1} style={styles.bigNumber}>{values[index] === null ? '—' : values[index]!.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}</Text><Text style={styles.numberConfidence}>{confidence(spec.atributos[attribute])}</Text></View>)}</View>
+    <View style={styles.chart}>{specs.map((spec, index) => <View key={index} style={styles.barRow}><Text style={[styles.barId, { color: accents[index] }]}>0{index + 1}</Text><View style={styles.track}><View style={[styles.bar, { width: `${Math.max(0, values[index] ?? 0) / maximum * 100}%`, backgroundColor: accents[index] }]} /></View></View>)}</View>
+    <Text style={styles.insight}>{difference === null ? 'Dados insuficientes para calcular a diferença.' : difference === 0 ? 'Mesmo valor nas duas fichas.' : `Diferença de ${difference.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} ${unit} entre os modelos.`}</Text>
+  </View>;
 }
-
-function CelulaAtributo({ campo, vencendo }: { campo: SpecField; vencendo: boolean }) {
-  return (
-    <View style={[styles.celula, vencendo && styles.celulaVencedora]}>
-      <Text style={[styles.celulaValor, campo.confianca === 'nao_encontrado' && styles.valorNull]}>
-        {campo.valor !== null ? String(campo.valor) : '—'}
-      </Text>
-      <ConfidenceBadge confianca={campo.confianca} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  chooseButton: { borderRadius: 24, backgroundColor: '#fff', padding: 16, marginBottom: 8 },
-  chooseLabel: { color: Colors.fordBlue, fontWeight: '600' },
-  demo: { color: '#fff', fontSize: 12, marginBottom: 12 },
-  container: { flex: 1, backgroundColor: 'transparent' },
-  intro: { backgroundColor: '#FFFFFFF0', borderRadius: 24, padding: 18, marginBottom: 12 },
-  scroll: { padding: 18, gap: 8, paddingBottom: 32, width: '100%', maxWidth: 720, alignSelf: 'center' },
-  vazio: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-    gap: 8,
-  },
-  vazioIcone: { fontSize: 48 },
-  vazioTexto: { fontSize: 17, fontWeight: '600', color: Colors.textPrimary },
-  vazioSubtexto: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
-  headerRow: {
-    flexDirection: 'row',
-    marginBottom: 4,
-    gap: 2,
-  },
-  colunaChave: { width: 80 },
-  colunaHeader: {
-    flex: 1,
-    backgroundColor: Colors.fordBlue,
-    borderRadius: 24,
-    padding: 10,
-    gap: 2,
-  },
-  headerMarca: { fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
-  headerModelo: { fontSize: 14, color: '#fff', fontWeight: '700' },
-  headerVersao: { fontSize: 11, color: 'rgba(255,255,255,0.75)' },
-  linha: {
-    flexDirection: 'row',
-    gap: 2,
-    minHeight: 64,
-  },
-  chave: {
-    width: 80,
-    fontSize: 10,
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    paddingVertical: 10,
-    lineHeight: 14,
-  },
-  celula: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    gap: 4,
-    justifyContent: 'center',
-  },
-  celulaVencedora: {
-    backgroundColor: Colors.compareWinner,
-    borderColor: Colors.success,
-  },
-  celulaValor: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  valorNull: { color: Colors.textSecondary, fontWeight: '400' },
+  screen: { flex: 1, backgroundColor: '#151E27' }, scroll: { padding: 18, paddingBottom: 32, gap: 18, width: '100%', maxWidth: 680, alignSelf: 'center' }, vazio: { flex: 1, justifyContent: 'center', padding: 24 },
+  top: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }, eyebrow: { color: '#A8BACB', fontSize: 10, letterSpacing: 1.3 }, title: { fontSize: 30, fontWeight: '600', color: '#F4F7FC', letterSpacing: -0.8 }, chooseButton: { alignSelf: 'flex-start', paddingHorizontal: 17, paddingVertical: 13, borderRadius: 24, backgroundColor: '#253442' }, chooseLabel: { color: '#E1EDFA', fontSize: 13, fontWeight: '600' }, demo: { color: '#BDCDE0', fontSize: 11, lineHeight: 17 },
+  hero: { backgroundColor: '#507EB0', experimental_backgroundImage: HOME_GRADIENT, borderRadius: 28, padding: 23, gap: 10 }, heroEyebrow: { color: '#F3F7FC', fontSize: 10, letterSpacing: 2 }, heroTitle: { color: '#fff', fontSize: 32, lineHeight: 36, fontWeight: '700', letterSpacing: -1 }, heroDescription: { color: '#fff', fontSize: 13, lineHeight: 20 },
+  vehicles: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, vehicle: { flex: 1, minWidth: 120, backgroundColor: '#202D39', borderRadius: 21, borderTopWidth: 3, padding: 16, gap: 6 }, model: { color: '#fff', fontSize: 20, fontWeight: '600' }, muted: { color: '#AFBECC', fontSize: 11, lineHeight: 17 },
+  tabs: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#202D39', borderRadius: 25, padding: 5, gap: 5 }, tab: { flexGrow: 1, paddingHorizontal: 12, minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22 }, activeTab: { backgroundColor: '#F0F5FB' }, tabLabel: { color: '#B9C9D9', fontSize: 12, fontWeight: '600' }, activeTabLabel: { color: '#203344' },
+  metric: { gap: 13, padding: 16, backgroundColor: '#1D2934', borderRadius: 26 }, metricHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }, sectionTitle: { fontSize: 16, fontWeight: '600', color: '#F1F6FB', flexShrink: 1 }, numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, numberCard: { flex: 1, minWidth: 108, padding: 14, borderRadius: 21, gap: 8 }, numberName: { color: '#203648', fontSize: 12, fontWeight: '600' }, bigNumber: { color: '#152D40', fontSize: 38, fontWeight: '700', letterSpacing: -1, fontVariant: ['tabular-nums'] }, numberConfidence: { color: '#29495D', fontSize: 10 }, chart: { gap: 9, paddingTop: 3 }, barRow: { flexDirection: 'row', alignItems: 'center', gap: 10 }, barId: { fontSize: 10, fontWeight: '700' }, track: { flex: 1, height: 9, backgroundColor: '#344350', borderRadius: 8, overflow: 'hidden' }, bar: { height: '100%', borderRadius: 8 }, insight: { color: '#BCCBD8', fontSize: 12, lineHeight: 18 },
+  coverage: { padding: 20, borderRadius: 26, backgroundColor: '#0E161E', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 16 }, coverageCopy: { flex: 1, minWidth: 140, gap: 8 }, ring: { width: 100, height: 100, borderRadius: 50, borderWidth: 7, borderColor: '#96B8E6', alignItems: 'center', justifyContent: 'center' }, ringNumber: { color: '#fff', fontSize: 23, fontWeight: '700', fontVariant: ['tabular-nums'] }, ringLabel: { color: '#AEBECE', fontSize: 9 }, coverageTrack: { width: '100%', height: 6, borderRadius: 5, backgroundColor: '#344350', overflow: 'hidden' }, coverageFill: { height: '100%', backgroundColor: '#96B8E6' }, detailsButton: { minHeight: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingHorizontal: 8 }, toggle: { color: '#96B8E6', fontSize: 25 }, detailCard: { padding: 20, borderRadius: 24, backgroundColor: '#202D39', gap: 15 }, detailRow: { gap: 5 }, detailName: { fontSize: 12, fontWeight: '600' }, detailValue: { color: '#fff', fontSize: 14, lineHeight: 21 },
 });

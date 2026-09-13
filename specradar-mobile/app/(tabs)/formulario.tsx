@@ -1,4 +1,5 @@
 import { AnalysisHero, AttributeSelector } from '@/src/components/analysis-controls';
+import { HOME_GRADIENT } from '@/src/components/screen-background';
 import { VehicleCarousel } from '@/src/components/vehicle-carousel';
 import { VEHICLES } from '@/src/data/vehicles';
 import { useCallback, useEffect, useState } from 'react';
@@ -194,7 +195,8 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, color: Colors.textSecondary },
   chipTextAtivo: { color: '#fff' },
   botao: {
-    backgroundColor: Colors.fordBlue,
+    backgroundColor: '#507EB0',
+    experimental_backgroundImage: HOME_GRADIENT,
     borderRadius: 24,
     padding: 14,
     alignItems: 'center',

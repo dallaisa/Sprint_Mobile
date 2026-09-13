@@ -15,7 +15,7 @@ export function VehicleCarousel({ vehicles, onSelect, analysis = false, selected
   const [width, setWidth] = useState(320);
   const [active, setActive] = useState(0);
   const scroll = useRef<ScrollView>(null);
-  const cardWidth = Math.max(240, width - 12);
+  const cardWidth = Math.max(1, width);
   const signature = vehicles.map(vehicle => vehicle.model).join('|');
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function VehicleCarousel({ vehicles, onSelect, analysis = false, selected
 
 const s = StyleSheet.create({
   container: { width: '100%', minWidth: 0 },
-  track: { gap: 12, paddingRight: 12 },
+  track: { gap: 12 },
   card: { borderRadius: 26, overflow: 'hidden', backgroundColor: '#7396BF' },
   selected: { borderWidth: 2, borderColor: '#315D7B' },
   image: { flex: 1, justifyContent: 'space-between' },
@@ -80,16 +80,16 @@ const s = StyleSheet.create({
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15 },
   tag: { color: '#fff', backgroundColor: '#193D6599', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, fontSize: 10, fontWeight: '600' },
   icon: { borderRadius: 20, width: 33, height: 33, alignItems: 'center', justifyContent: 'center', backgroundColor: '#193D6599' },
-  caption: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 16, backgroundColor: 'rgba(91, 137, 182, 0.86)', borderTopWidth: 1, borderTopColor: '#ffffff60' },
-  copy: { flex: 1, gap: 5 },
+  caption: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, padding: 16, backgroundColor: 'rgba(91, 137, 182, 0.86)', borderTopWidth: 1, borderTopColor: '#ffffff60' },
+  copy: { flex: 1, minWidth: 140, gap: 5 },
   title: { color: '#fff', fontSize: 23, fontWeight: '600', letterSpacing: -0.4 },
   subtitle: { color: '#fff', fontSize: 11, lineHeight: 15 },
   detail: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   meta: { color: '#F0F6FE', fontSize: 10, flexShrink: 1 },
   button: { minHeight: 44, minWidth: 62, paddingHorizontal: 13, borderRadius: 24, backgroundColor: '#315B81', alignItems: 'center', justifyContent: 'center' },
   buttonLabel: { color: '#fff', fontSize: 12, fontWeight: '600' },
-  dots: { flexDirection: 'row', justifyContent: 'center' },
-  dotTarget: { width: 44, height: 36, alignItems: 'center', justifyContent: 'center' },
+  dots: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  dotTarget: { width: 24, height: 36, alignItems: 'center', justifyContent: 'center' },
   dot: { width: 6, height: 6, borderRadius: 4, backgroundColor: '#D8E6F7' },
   activeDot: { width: 20, backgroundColor: '#315D7B' },
 });

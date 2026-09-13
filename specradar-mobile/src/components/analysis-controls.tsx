@@ -31,10 +31,10 @@ export function AttributeSelector({ selected, onChange, disabled }: Props) {
   </View>;
 }
 const s = StyleSheet.create({
-  hero: { padding: 25, gap: 10, borderRadius: 34, borderBottomLeftRadius: 44, borderBottomRightRadius: 44, backgroundColor: '#6897C4' },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }, eyebrow: { color: '#fff', fontSize: 9, letterSpacing: 1.5 },
+  hero: { padding: 20, gap: 10, borderRadius: 34, borderBottomLeftRadius: 44, borderBottomRightRadius: 44, backgroundColor: '#6897C4' },
+  top: { flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 12 }, eyebrow: { color: '#fff', fontSize: 9, letterSpacing: 1.5 },
   kicker: { color: '#fff', fontSize: 17 }, title: { color: '#fff', fontSize: 40, fontWeight: '700', letterSpacing: -1 }, subtitle: { color: '#fff', fontSize: 13, lineHeight: 20 },
   search: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF26', borderRadius: 30, paddingHorizontal: 16, marginVertical: 14 }, input: { color: '#fff', fontSize: 12, minHeight: 50, flex: 1, minWidth: 0 },
-  shortcuts: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 }, shortcut: { alignItems: 'center', gap: 9, flex: 1 }, circle: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F4F8FD', alignItems: 'center', justifyContent: 'center' }, circleActive: { backgroundColor: '#315D7B', borderWidth: 2, borderColor: '#CFE6FB' }, shortcutText: { color: '#fff', fontSize: 10 },
+  shortcuts: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }, shortcut: { alignItems: 'center', gap: 9, flexGrow: 1, flexBasis: '40%' }, circle: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F4F8FD', alignItems: 'center', justifyContent: 'center' }, circleActive: { backgroundColor: '#315D7B', borderWidth: 2, borderColor: '#CFE6FB' }, shortcutText: { color: '#fff', fontSize: 10 },
   filter: { backgroundColor: '#fff', borderRadius: 25, padding: 18 }, filterHeader: { flexDirection: 'row', alignItems: 'center', minHeight: 44 }, filterTitle: { color: Colors.textPrimary, fontSize: 16, fontWeight: '600' }, filterSubtitle: { color: Colors.textSecondary, fontSize: 12 }, group: { color: Colors.fordBlue, fontSize: 12, fontWeight: '700', marginBottom: 5 }, row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44, gap: 10 }, attribute: { color: Colors.textPrimary, fontSize: 13, flex: 1 },
 });
