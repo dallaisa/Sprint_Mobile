@@ -2,7 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { Image, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/src/theme/colors';
-import { clearToken } from '@/src/storage/auth';
+import { signOut } from '@/src/api/auth';
 import { HomeBackground } from '@/src/components/screen-background';
 
 const tabIcons = {
@@ -31,7 +31,7 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   async function handleLogout() {
-    await clearToken();
+    await signOut();
     router.replace('/login');
   }
 

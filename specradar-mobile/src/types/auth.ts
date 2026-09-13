@@ -3,12 +3,6 @@ export interface LoginRequest {
   senha: string;
 }
 
-export interface TokenResponse {
-  token: string;
-  tipo: string;
-  expiraEm: string;
-}
-
 export interface RegisterRequest {
   nome: string;
   email: string;

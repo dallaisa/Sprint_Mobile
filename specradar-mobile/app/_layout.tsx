@@ -12,7 +12,7 @@ import {
   Barlow_500Medium,
   Barlow_600SemiBold,
 } from '@expo-google-fonts/barlow';
-import { getToken } from '@/src/storage/auth';
+import { getSession, onSessionEnd } from '@/src/storage/session';
 import { Colors } from '@/src/theme/colors';
 
 export default function RootLayout() {
@@ -37,9 +37,9 @@ export default function RootLayout() {
     }
     let active = true;
     setChecking(true);
-    getToken()
-      .then((token) => {
-        if (active && !token) router.replace('/login');
+    getSession()
+      .then((session) => {
+        if (active && !session) router.replace('/login');
       })
       .catch(() => {
         if (active) router.replace('/login');
@@ -49,6 +49,11 @@ export default function RootLayout() {
       });
     return () => { active = false; };
   }, [router, route]);
+
+  // A API recusou a renovação do token: volta ao login avisando. "Sair" navega por conta própria.
+  useEffect(() => onSessionEnd((reason) => {
+    if (reason === 'expired') router.replace({ pathname: '/login', params: { expired: '1' } });
+  }), [router]);
 
   const ready = fontsLoaded && !checking;
 

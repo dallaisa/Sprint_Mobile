@@ -1,8 +1,9 @@
+// Cliente antigo: sai quando Análise e Comparar migrarem para src/api/specs.ts (fases 4 e 7).
 import { SpecQuery, SpecResponse, ApiError } from '@/src/types/spec';
-import { TokenResponse, RegisterRequest } from '@/src/types/auth';
+import { RegisterRequest } from '@/src/types/auth';
 import { rangerRaptorMock } from './mocks/ranger-raptor';
-import { mockLogin, mockRegister } from './mocks/auth';
-import { getToken } from '@/src/storage/auth';
+import { mockRegister } from './mocks/auth';
+import { getSession } from '@/src/storage/session';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? '';
 const USE_MOCK = !BASE_URL;
@@ -31,28 +32,8 @@ async function fetchWithTimeout(url: string, options: RequestInit): Promise<Resp
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
-  const token = await getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
-export async function loginUser(email: string, senha: string): Promise<TokenResponse> {
-  if (USE_MOCK) return mockLogin(email, senha);
-
-  const response = await fetchWithTimeout(`${BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, senha }),
-  });
-
-  if (!response.ok) {
-    const errMap: Record<number, string> = {
-      401: 'E-mail ou senha incorretos.',
-      429: 'Muitas tentativas. Tente novamente em instantes.',
-    };
-    throw new HttpError(response.status, errMap[response.status] ?? `Erro ${response.status}.`);
-  }
-
-  return response.json() as Promise<TokenResponse>;
+  const session = await getSession();
+  return session ? { Authorization: `Bearer ${session.accessToken}` } : {};
 }
 
 export async function registerUser(data: RegisterRequest): Promise<void> {
