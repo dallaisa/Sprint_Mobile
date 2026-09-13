@@ -35,7 +35,7 @@ export function ChatSpecResult({ spec }: { spec: Ficha }) {
       return <View key={key} style={[s.metric, { backgroundColor: index % 2 ? '#D9EEEB' : '#E9F2FF' }]}>
         <Text style={s.metricLabel}>{rotuloAtributo(key)}</Text>
         <Text selectable style={[s.number, value.length > 9 && { fontSize: 24 }]}>{value}</Text>
-        <ConfidenceBadge confianca={missing ? 'NAO_ENCONTRADO' : field.confianca} />
+        {field ? <ConfidenceBadge confianca={missing ? 'NAO_ENCONTRADO' : field.confianca} /> : <Text style={s.unit}>Não consultado</Text>}
       </View>;
     })}</View>
     <View style={s.coverage}>

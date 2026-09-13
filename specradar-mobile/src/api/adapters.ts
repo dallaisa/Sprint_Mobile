@@ -40,7 +40,25 @@ export function toFicha(spec: SpecResponse): Ficha {
   return { ...spec, id: fichaId(spec), atributos };
 }
 
-const DATA_LOCAL = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?$/;
+export type ParteMensagem = { texto: string; estilo: 'normal' | 'negrito' | 'italico' };
+
+/**
+ * A mensagem do /chat/message usa **negrito** e *itálico* no estilo Markdown
+ * ("Encontrei as especificações da **Ford Ranger Raptor**:"). Quebra o texto
+ * em partes para exibir sem os asteriscos.
+ */
+export function partesDaMensagem(mensagem: string): ParteMensagem[] {
+  const texto = mensagem.replace(/\n{3,}/g, '\n\n').trim();
+  return texto.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g)
+    .filter(Boolean)
+    .map((parte): ParteMensagem => {
+      if (/^\*\*[^*]+\*\*$/.test(parte)) return { texto: parte.slice(2, -2), estilo: 'negrito' };
+      if (/^\*[^*\n]+\*$/.test(parte)) return { texto: parte.slice(1, -1), estilo: 'italico' };
+      return { texto: parte, estilo: 'normal' };
+    });
+}
+
+const DATA_LOCAL =/^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?)?$/;
 
 /**
  * Lê datas da API. LocalDateTime não tem fuso e pode vir com até 9 casas
