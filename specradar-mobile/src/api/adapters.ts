@@ -1,4 +1,4 @@
-import type { CampoSpec, SpecResponse, VeiculoRef } from '@/src/types/api';
+import type { CampoSpec, ItemComparativo, SpecResponse, VeiculoRef } from '@/src/types/api';
 import type { Ficha } from '@/src/types/spec';
 
 /**
@@ -40,7 +40,54 @@ export function toFicha(spec: SpecResponse): Ficha {
   return { ...spec, id: fichaId(spec), atributos };
 }
 
-export type ParteMensagem = { texto: string; estilo: 'normal' | 'negrito' | 'italico' };
+// Unidades que a API reconhece ao escolher o vencedor (SpecService.CampoNumerico),
+// com o fator para a unidade base (torque em Nm).
+const UNIDADES_COMPARAVEIS: Record<string, { padrao: RegExp; fator: number }[]> = {
+  potencia: [{ padrao: /(\d+(?:[.,]\d+)?)\s*cv/i, fator: 1 }],
+  torque: [
+    { padrao: /(\d+(?:[.,]\d+)?)\s*nm/i, fator: 1 },
+    { padrao: /(\d+(?:[.,]\d+)?)\s*kgf\s*\.?\s*m/i, fator: 9.80665 },
+  ],
+  aceleracao: [{ padrao: /(\d+(?:[.,]\d+)?)\s*segundos/i, fator: 1 }],
+  preco: [{ padrao: /r\$\s*(\d{1,3}(?:\.\d{3})*(?:,\d+)?)/i, fator: 1 }],
+  consumo: [{ padrao: /(\d+(?:[.,]\d+)?)\s*km\/l/i, fator: 1 }],
+};
+
+/**
+ * Número de um valor em texto ("397 cv @ 5.650 rpm" → 397; "55 kgfm" → 539,4 Nm),
+ * com as mesmas unidades que a API usa no compare. null quando o atributo não é
+ * comparável ou o texto não traz a unidade esperada. Diferente da API, "5.8" é
+ * lido como decimal (a API leria 58).
+ */
+export function valorComparavel(atributo: string, valor: string | null): number | null {
+  if (!valor) return null;
+  for (const { padrao, fator } of UNIDADES_COMPARAVEIS[atributo.trim().toLowerCase()] ?? []) {
+    const encontrado = padrao.exec(valor)?.[1];
+    if (!encontrado) continue;
+    const normalizado = /^\d+\.\d{1,2}$/.test(encontrado) ? encontrado : encontrado.replace(/\./g, '').replace(',', '.');
+    const numero = Number(normalizado) * fator;
+    return Number.isFinite(numero) ? numero : null;
+  }
+  return null;
+}
+
+/**
+ * Lado vencedor de um item do /specs/compare: 0, 1, 'empate' ou null. A API
+ * devolve só o nome do modelo, então dois carros com o mesmo modelo (Ranger XLT
+ * × Ranger Raptor) ficam sem vencedor identificável.
+ */
+export function ladoVencedor(item: ItemComparativo, veiculo1: VeiculoRef, veiculo2: VeiculoRef): 0 | 1 | 'empate' | null {
+  if (item.vencedor === 'EMPATE') return 'empate';
+  const nome = item.vencedor.trim().toLowerCase();
+  const modelo1 = veiculo1.modelo.trim().toLowerCase();
+  const modelo2 = veiculo2.modelo.trim().toLowerCase();
+  if (item.vencedor === 'N/A' || modelo1 === modelo2) return null;
+  if (nome === modelo1) return 0;
+  if (nome === modelo2) return 1;
+  return null;
+}
+
+export type ParteMensagem ={ texto: string; estilo: 'normal' | 'negrito' | 'italico' };
 
 /**
  * A mensagem do /chat/message usa **negrito** e *itálico* no estilo Markdown

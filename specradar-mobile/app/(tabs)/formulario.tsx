@@ -24,11 +24,7 @@ import { LoadingSpinner } from '@/src/components/LoadingSpinner';
 import { ErrorMessage } from '@/src/components/ErrorMessage';
 import { SpecCard } from '@/src/components/SpecCard';
 
-// Mesmas regras do SpecQueryRequest da API (sem versão, o app envia "base").
-const MARCA_REGEX = /^[a-zA-ZÀ-ÿ\s-]{2,50}$/;
-const MODELO_REGEX = /^[a-zA-ZÀ-ÿ\s-]{2,80}$/;
-const VERSAO_REGEX = /^[a-zA-ZÀ-ÿ0-9\s.-]{2,80}$/;
-const VERSAO_PADRAO = 'base';
+import { MARCA_REGEX, MODELO_REGEX, VERSAO_PADRAO, VERSAO_REGEX } from '@/src/api/validacao';
 
 export default function FormularioScreen() {
   const params = useLocalSearchParams<{ marca?: string; modelo?: string }>();

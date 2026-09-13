@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { querySpec } from '@/src/api/specs';
-import { ApiError } from '@/src/api/http';
+import { sendChatMessage } from '@/src/api/chat';
+import { API_CONFIGURED, ApiError } from '@/src/api/http';
+import { MODELO_REGEX, VERSAO_PADRAO } from '@/src/api/validacao';
 import { saveToHistory } from '@/src/storage/history';
 import { Colors } from '@/src/theme/colors';
 import { ATRIBUTOS_PADRAO } from '@/src/data/atributos';
@@ -22,6 +24,18 @@ export const COMPARISON_OPTIONS = [
   { brand: 'Chevrolet', model: 'S10', category: 'Picapes', image: require('../../assets/s10.jpeg') as number },
 ];
 
+/** Garante a ficha salva na API antes do /specs/compare, que exige os dois carros no banco. */
+async function fichaParaComparar(vehicle: (typeof COMPARISON_OPTIONS)[number]): Promise<Ficha> {
+  if (MODELO_REGEX.test(vehicle.model)) {
+    return querySpec({ marca: vehicle.brand, modelo: vehicle.model, versao: VERSAO_PADRAO, atributos: ATRIBUTOS_PADRAO });
+  }
+  // A consulta recusa modelo com número (ex.: S10). O chat da API não tem essa
+  // validação e salva a ficha, que o compare aceita.
+  const reply = await sendChatMessage(`${vehicle.brand} ${vehicle.model}`);
+  if (!reply.ficha) throw new Error(`Não foi possível buscar a ficha da ${vehicle.brand} ${vehicle.model}. ${reply.mensagem}`);
+  return reply.ficha;
+}
+
 export function ComparisonPicker({ onCompare }: { onCompare: (first: Ficha, second: Ficha) => void }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState('');
@@ -40,7 +54,7 @@ export function ComparisonPicker({ onCompare }: { onCompare: (first: Ficha, seco
     setError('');
     try {
       const chosen = selected.map(key => COMPARISON_OPTIONS.find(vehicle => `${vehicle.brand} ${vehicle.model}` === key)!);
-      const [first, second] = await Promise.all(chosen.map(vehicle => querySpec({ marca: vehicle.brand, modelo: vehicle.model, versao: 'base', atributos: ATRIBUTOS_PADRAO })));
+      const [first, second] = await Promise.all(chosen.map(fichaParaComparar));
       if (!mounted.current) return;
       await saveToHistory(first);
       await saveToHistory(second);
@@ -59,7 +73,7 @@ export function ComparisonPicker({ onCompare }: { onCompare: (first: Ficha, seco
     <View style={s.search}><MaterialIcons name="search" size={20} color={Colors.fordBlue} /><TextInput accessibilityLabel="Buscar carros para comparar" value={search} onChangeText={setSearch} placeholder="Marca, modelo ou categoria" style={s.input} editable={!loading} /></View>
     <View style={s.selection}>{selected.length ? selected.map((key, index) => <Pressable key={key} accessibilityRole="button" accessibilityLabel={`Remover ${key}`} disabled={loading} onPress={() => setSelected(current => current.filter(item => item !== key))} style={s.chip}><Text style={s.chipText}>{index + 1}. {key} ×</Text></Pressable>) : <Text style={ui.description}>Nenhum carro selecionado</Text>}</View>
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: selected.length !== 2 || loading }} disabled={selected.length !== 2 || loading} onPress={compare} style={[ui.button, (selected.length !== 2 || loading) && { opacity: 0.45 }]}>{loading ? <ActivityIndicator color="#fff" /> : <Text style={ui.buttonText}>Comparar selecionados · {selected.length}/2</Text>}</Pressable>
-    {!process.env.EXPO_PUBLIC_API_BASE_URL && <Text style={s.note}>Modo demonstração: os valores retornados usam a ficha de exemplo da Ranger Raptor, não as especificações reais de cada modelo.</Text>}
+    {!API_CONFIGURED && <Text style={s.note}>Modo demonstração: os valores retornados usam a ficha de exemplo da Ranger Raptor, não as especificações reais de cada modelo.</Text>}
     {!!error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
     <View style={s.grid}>{options.map(vehicle => {
       const key = `${vehicle.brand} ${vehicle.model}`;
