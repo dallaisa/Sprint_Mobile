@@ -1,6 +1,6 @@
-import { TokenResponse } from '@/src/types/auth';
+import type { TokenResponse } from '@/src/types/auth';
 
-const USUARIOS_MOCK = [
+export const USUARIOS_MOCK = [
   { email: 'admin@spec.com', senha: '123456', nome: 'Admin Usuário', role: 'ADMIN' },
 ];
 
