@@ -8,8 +8,8 @@ import { loadHistory } from '@/src/storage/history';
 import type { CampoSpec, CompareResponse, ItemComparativo } from '@/src/types/api';
 import type { Ficha } from '@/src/types/spec';
 import { API_CONFIGURED, ApiError } from '@/src/api/http';
-import { compareSpecs } from '@/src/api/specs';
-import { ladoVencedor, valorComparavel } from '@/src/api/adapters';
+import { compareSpecs, getFicha } from '@/src/api/specs';
+import { ladoVencedor, valorComparavel, veiculoDoId } from '@/src/api/adapters';
 import { buscarAtributo, rotuloAtributo } from '@/src/data/atributos';
 import { HOME_GRADIENT } from '@/src/components/screen-background';
 
@@ -50,10 +50,17 @@ export default function CompararScreen() {
     setLoading(true);
     setSpec1(null);
     setSpec2(null);
-    loadHistory().then((h) => {
+    loadHistory().then(async (h) => {
+      // Fichas do catálogo podem não estar no aparelho: busca a versão salva na API.
+      const resolve = async (id: string) => {
+        const local = h.find((s) => s.id === id);
+        const veiculo = local ? null : veiculoDoId(id);
+        return local ?? (veiculo ? await getFicha(veiculo).catch(() => null) : null);
+      };
+      const [first, second] = await Promise.all([resolve(v1), resolve(v2)]);
       if (!active) return;
-      setSpec1(h.find((s) => s.id === v1) ?? null);
-      setSpec2(h.find((s) => s.id === v2) ?? null);
+      setSpec1(first);
+      setSpec2(second);
     }).catch(() => {
       if (active) { setSpec1(null); setSpec2(null); }
     }).finally(() => { if (active) setLoading(false); });
@@ -92,7 +99,7 @@ export default function CompararScreen() {
   }
 
   if (!spec1 || !spec2) return <View style={styles.screen}><View style={styles.vazio}>
-    {loading ? <ActivityIndicator color="#fff" size="large" accessibilityLabel="Carregando comparação" /> : <EmptyPanel icon="search-off" title="Vamos selecionar novamente?" description="Uma das fichas não está mais disponível no histórico. Escolha dois veículos para continuar." href="/(tabs)/historico" action="Abrir histórico" />}
+    {loading ? <ActivityIndicator color="#fff" size="large" accessibilityLabel="Carregando comparação" /> : <EmptyPanel icon="search-off" title="Vamos selecionar novamente?" description="Não foi possível abrir uma das fichas, nem no aparelho nem na API. Escolha dois veículos para continuar." href="/(tabs)/historico" action="Abrir histórico" />}
   </View></View>;
 
   const specs = [spec1, spec2];
