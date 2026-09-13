@@ -12,6 +12,23 @@ export function fichaId(veiculo: VeiculoRef): string {
     .join('|');
 }
 
+/** Inverso de fichaId. A API busca sem diferenciar maiúsculas, então o trio em minúsculas serve. */
+export function veiculoDoId(id: string): VeiculoRef | null {
+  const [marca, modelo, versao, ...resto] = id.split('|');
+  return marca && modelo && versao && resto.length === 0 ? { marca, modelo, versao } : null;
+}
+
+/**
+ * As sugestões do 404 de ficha vêm como "Marca Modelo Versão", sempre com a
+ * marca e o modelo pedidos. Devolve só a versão, ou null se o texto não
+ * começar por eles.
+ */
+export function versaoDaSugestao(sugestao: string, marca: string, modelo: string): string | null {
+  const prefixo = `${marca.trim()} ${modelo.trim()} `.toLowerCase();
+  if (!sugestao.toLowerCase().startsWith(prefixo)) return null;
+  return sugestao.slice(prefixo.length).trim() || null;
+}
+
 /** Ficha da API com id local e campos indexados pelo nome (em minúsculas). */
 export function toFicha(spec: SpecResponse): Ficha {
   const atributos: Record<string, CampoSpec> = {};
