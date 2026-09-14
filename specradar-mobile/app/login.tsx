@@ -150,7 +150,7 @@ export default function LoginScreen() {
 }
 
 const s = StyleSheet.create({
-  shade: { ...StyleSheet.absoluteFillObject, backgroundColor: '#061C4626' },
+  shade: { ...StyleSheet.absoluteFill, backgroundColor: '#061C4626' },
   welcome: { flex: 1, justifyContent: 'space-between' },
   brand: { color: '#fff', fontSize: 12, fontWeight: '700', letterSpacing: 3, paddingHorizontal: 28 },
   welcomeCopy: { flexGrow: 1, justifyContent: 'center', padding: 30, gap: 18 },
