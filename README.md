@@ -21,6 +21,25 @@ Plataforma de inteligência competitiva automotiva desenvolvida para o Challenge
 
 ---
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/01-boas-vindas.png" width="220" alt="Tela de boas-vindas"><br><sub>Boas-vindas</sub></td>
+    <td align="center"><img src="docs/screenshots/02-login.png" width="220" alt="Tela de login"><br><sub>Login</sub></td>
+    <td align="center"><img src="docs/screenshots/03-inicio.png" width="220" alt="Tela inicial com busca e carrossel de modelos"><br><sub>Início</sub></td>
+    <td align="center"><img src="docs/screenshots/04-analise.png" width="220" alt="Análise guiada por categorias"><br><sub>Análise guiada</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/05-historico.png" width="220" alt="Histórico de consultas com estatísticas"><br><sub>Histórico</sub></td>
+    <td align="center"><img src="docs/screenshots/06-chat.png" width="220" alt="Resultado de consulta pelo chat"><br><sub>Chat</sub></td>
+    <td align="center"><img src="docs/screenshots/07-comparar.png" width="220" alt="Comparação lado a lado entre dois veículos"><br><sub>Comparar</sub></td>
+    <td></td>
+  </tr>
+</table>
+
+---
+
 ## Stack
 
 | Camada | Tecnologia |
