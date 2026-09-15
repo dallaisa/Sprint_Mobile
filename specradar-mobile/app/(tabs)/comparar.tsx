@@ -1,3 +1,4 @@
+import { useTabContentInset } from '@/src/components/use-tab-content-inset';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,6 +31,7 @@ function confidence(field?: SpecField) {
   return !field || field.valor === null || field.confianca === 'nao_encontrado' ? 'Sem dado' : field.confianca === 'alta' ? 'Alta confiança' : 'Estimativa';
 }
 export default function CompararScreen() {
+  const tabContentInset = useTabContentInset();
   const insets = useSafeAreaInsets();
   const [category, setCategory] = useState(0);
   const [details, setDetails] = useState(false);
@@ -58,13 +60,13 @@ export default function CompararScreen() {
 
   if (choosing) {
     return (
-      <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 20 }]}>
+      <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.scroll, { paddingBottom: tabContentInset + 32, paddingTop: insets.top + 20 }]}>
         <ComparisonPicker onCompare={(first, second) => { setSpec1(first); setSpec2(second); setLoading(false); setChoosing(false); }} />
       </ScrollView></View>
     );
   }
 
-  if (!spec1 || !spec2) return <View style={styles.screen}><View style={styles.vazio}>
+  if (!spec1 || !spec2) return <View style={styles.screen}><View style={[styles.vazio, { paddingBottom: tabContentInset + 24 }]}>
     {loading ? <ActivityIndicator color="#fff" size="large" accessibilityLabel="Carregando comparação" /> : <EmptyPanel icon="search-off" title="Vamos selecionar novamente?" description="Uma das fichas não está mais disponível no histórico. Escolha dois veículos para continuar." href="/(tabs)/historico" action="Abrir histórico" />}
   </View></View>;
 
@@ -73,7 +75,7 @@ export default function CompararScreen() {
   const available = fields.filter(field => field.valor !== null && field.confianca !== 'nao_encontrado').length;
   const trusted = fields.filter(field => field.valor !== null && field.confianca === 'alta').length;
   const coverage = fields.length ? Math.round(available / fields.length * 100) : 0;
-  return <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]}>
+  return <View style={styles.screen}><ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.scroll, { paddingBottom: tabContentInset + 32, paddingTop: insets.top + 16 }]}>
     <View style={styles.top}><Text style={styles.eyebrow}>SEU RADAR / COMPARAÇÃO</Text><Text style={styles.eyebrow}>02 MODELOS</Text></View>
     <Text accessibilityRole="header" style={styles.title}>Sua próxima escolha.</Text>
     <Pressable accessibilityRole="button" onPress={() => setChoosing(true)} style={styles.chooseButton}><Text style={styles.chooseLabel}>← Escolher outros carros</Text></Pressable>

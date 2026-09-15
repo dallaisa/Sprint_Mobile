@@ -1,3 +1,4 @@
+import { useTabContentInset } from '@/src/components/use-tab-content-inset';
 import { AnalysisHero, AttributeSelector } from '@/src/components/analysis-controls';
 import { HOME_GRADIENT } from '@/src/components/screen-background';
 import { VehicleCarousel } from '@/src/components/vehicle-carousel';
@@ -26,6 +27,7 @@ import { SpecCard } from '@/src/components/SpecCard';
 const MARCA_REGEX = /^[A-Za-zÀ-ú\s\-]{2,40}$/;
 
 export default function FormularioScreen() {
+  const tabContentInset = useTabContentInset();
   const params = useLocalSearchParams<{ marca?: string; modelo?: string }>();
   const [marca, setMarca] = useState('');
   const [search, setSearch] = useState('');
@@ -80,7 +82,7 @@ export default function FormularioScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={[styles.scroll, { paddingBottom: tabContentInset + 32 }]} keyboardShouldPersistTaps="handled">
         <AnalysisHero search={search} onSearch={setSearch} selected={atributosSelecionados} onChange={setAtributosSelecionados} disabled={loading} />
         {!data ? (
           <>

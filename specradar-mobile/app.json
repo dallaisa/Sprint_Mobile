@@ -7,22 +7,18 @@
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
-    "splash": {
-      "image": "./assets/logo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dallaisa.specradar",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dallaisa.specradar"
     },
     "web": {
       "favicon": "./assets/favicon.png"

@@ -1,3 +1,4 @@
+import { useTabContentInset } from '@/src/components/use-tab-content-inset';
 ﻿import { useState, useCallback } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -9,6 +10,7 @@ import { Colors } from '@/src/theme/colors';
 import { EmptyPanel, Pill, ui } from '@/src/components/radar-ui';
 
 export default function HistoricoScreen() {
+  const tabContentInset = useTabContentInset();
   const [history, setHistory] = useState<SpecResponse[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -34,7 +36,7 @@ export default function HistoricoScreen() {
     else if (selected === id) setSelected(null);
     else { router.push({ pathname: '/(tabs)/comparar', params: { v1: selected, v2: id } }); setSelected(null); }
   }
-  return <ScrollView style={s.screen} contentContainerStyle={ui.content} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
+  return <ScrollView style={s.screen} contentContainerStyle={[ui.content, { paddingBottom: tabContentInset + 24 }]} contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled">
     <View style={s.hero}><Image source={require('@/assets/historico.jpg')} style={s.heroImage} resizeMode="cover" accessibilityLabel="Pasta azul de histórico" /><View style={s.heroCopy}><Text style={s.eyebrow}>SUA MEMÓRIA AUTOMOTIVA</Text><Text style={s.title}>Histórico.</Text><Text style={s.subtitle}>Cada consulta, um novo ponto de vista.</Text></View></View>
     <View style={s.metrics}>{[{ value: history.length, label: 'fichas salvas' }, { value: new Set(history.map(item => `${item.marca} ${item.modelo}`)).size, label: 'modelos vistos' }, { value: fields.length ? `${Math.round(confirmed / fields.length * 100)}%` : '—', label: 'alta confiança' }].map(metric => <View key={metric.label} style={s.metric}><Text selectable style={s.metricValue}>{metric.value}</Text><Text style={s.metricLabel}>{metric.label}</Text></View>)}</View>
     <View style={[s.heading, { flexWrap: 'wrap', gap: 8 }]}><Text style={s.sectionTitle}>Suas descobertas</Text><Text style={s.muted}>{filter === 'Resumo' ? '3 mais recentes' : 'Últimos 3 dias'}</Text></View>
