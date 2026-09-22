@@ -25,6 +25,13 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ac90e932-96b3-45b1-b1b5-9ca6868ea367"
+      }
+    },
+    "owner": "pedrocamacho"
   }
 }
