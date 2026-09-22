@@ -1,23 +1,24 @@
 import { View, Text, TouchableOpacity, StyleSheet, Share } from 'react-native';
-import { SpecResponse } from '@/src/types/spec';
+import type { Ficha } from '@/src/types/spec';
 import { Colors } from '@/src/theme/colors';
-import { ConfidenceBadge } from './ConfidenceBadge';
+import { rotuloAtributo } from '@/src/data/atributos';
+import { CONFIANCA_GERAL_LABELS, ConfidenceBadge } from './ConfidenceBadge';
 
 interface Props {
-  spec: SpecResponse;
+  spec: Ficha;
   atributosFiltro?: string[];
 }
 
 export function SpecCard({ spec, atributosFiltro }: Props) {
-  const entradas = Object.entries(spec.atributos).filter(
-    ([chave]) => !atributosFiltro || atributosFiltro.includes(chave)
+  const campos = spec.campos.filter(
+    (campo) => !atributosFiltro || atributosFiltro.includes(campo.campo.toLowerCase())
   );
 
   async function exportarCSV() {
     const linhas = [
       'atributo,valor,confianca,fonte,verificado_em',
-      ...entradas.map(([chave, campo]) =>
-        [chave, campo.valor !== null ? String(campo.valor) : '', campo.confianca, campo.fonte ?? '', campo.verificado_em ?? '']
+      ...campos.map((campo) =>
+        [campo.campo, campo.valor ?? '', campo.confianca, campo.fonte ?? '', campo.verificado_em ?? '']
           .map((c) => `"${c.replace(/"/g, '""')}"`)
           .join(',')
       ),
@@ -33,17 +34,18 @@ export function SpecCard({ spec, atributosFiltro }: Props) {
           <Text style={styles.eyebrow}>FICHA TÉCNICA</Text>
           <Text selectable style={styles.titulo}>{spec.marca} {spec.modelo}</Text>
           <Text selectable style={styles.versao}>{spec.versao}</Text>
+          <Text style={styles.versao}>Confiança geral: {CONFIANCA_GERAL_LABELS[spec.confidence_geral] ?? spec.confidence_geral}</Text>
         </View>
         <TouchableOpacity style={styles.botaoCSV} onPress={exportarCSV}>
           <Text style={styles.botaoCSVTexto}>Exportar CSV</Text>
         </TouchableOpacity>
       </View>
 
-      {entradas.map(([chave, campo]) => (
-        <View key={chave} style={styles.campo}>
-          <Text style={styles.campoChave}>{chave.replace(/_/g, ' ')}</Text>
-          <Text selectable style={[styles.campoValor, campo.confianca === 'nao_encontrado' && styles.valorNull]}>
-            {campo.valor !== null ? String(campo.valor) : '—'}
+      {campos.map((campo) => (
+        <View key={campo.campo} style={styles.campo}>
+          <Text style={styles.campoChave}>{rotuloAtributo(campo.campo)}</Text>
+          <Text selectable style={[styles.campoValor, campo.confianca === 'NAO_ENCONTRADO' && styles.valorNull]}>
+            {campo.valor ?? '—'}
           </Text>
           <ConfidenceBadge confianca={campo.confianca} />
           {campo.fonte && <Text selectable style={styles.fonte}>Fonte: {campo.fonte}</Text>}

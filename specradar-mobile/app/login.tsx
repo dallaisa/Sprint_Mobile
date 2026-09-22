@@ -10,15 +10,24 @@ import { StatusBar } from 'expo-status-bar';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { PhotoBackground } from '@/src/components/screen-background';
-import { loginUser } from '@/src/api/client';
-import { saveToken } from '@/src/storage/auth';
+import { signIn } from '@/src/api/auth';
+import { API_CONFIGURED, ApiError } from '@/src/api/http';
 
 type Stage = 'welcome' | 'signin' | 'signup';
 const blue = '#3861C4';
 
+function loginErrorMessage(error: unknown): string {
+  if (!(error instanceof ApiError)) return 'Não foi possível entrar. Tente novamente.';
+  if (error.codigo === 'INVALID_CREDENTIALS') return 'E-mail ou senha incorretos.';
+  if (error.codigo === 'ACCOUNT_LOCKED') return `Muitas tentativas sem sucesso. Tente de novo em ${error.retryAfter ?? 30} s.`;
+  if (error.codigo === 'RATE_LIMIT_EXCEEDED') return `Muitas tentativas seguidas. Aguarde ${error.retryAfter ?? 60} s e tente de novo.`;
+  if (error.codigo === 'VALIDATION_ERROR') return Object.values(error.camposInvalidos)[0] ?? 'Confira o e-mail e a senha.';
+  return error.message;
+}
+
 export default function LoginScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; expired?: string }>();
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const [stage, setStage] = useState<Stage>('welcome');
@@ -66,6 +75,12 @@ export default function LoginScreen() {
   }, [params.mode]);
 
   useEffect(() => {
+    if (params.expired !== '1') return;
+    open('signin');
+    setMessage('Sua sessão expirou. Entre novamente.');
+  }, [params.expired]);
+
+  useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
       if (stage === 'welcome') return false;
       close();
@@ -84,18 +99,16 @@ export default function LoginScreen() {
     if (stage === 'signup') {
       if (password.length < 6) { setMessage('Use pelo menos 6 caracteres na senha.'); return; }
       if (!accepted) { setMessage('Confirme a opção de cadastro para continuar.'); return; }
-      setMessage('O cadastro ainda não está disponível. Por enquanto, somente a conta admin pode entrar.');
+      setMessage(API_CONFIGURED ? 'O cadastro ainda não está disponível. Peça seu acesso a um administrador do SpecRadar.' : 'O cadastro ainda não está disponível. Por enquanto, somente a conta admin pode entrar.');
       return;
     }
     setLoading(true);
     setMessage('');
     try {
-      if (normalizedEmail !== 'admin@spec.com') throw new Error('Por enquanto, o acesso está disponível somente para o admin.');
-      const result = await loginUser(normalizedEmail, password);
-      await saveToken(result.token, result.expiraEm, remember);
+      await signIn(normalizedEmail, password, remember);
       router.replace('/(tabs)/home');
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Não foi possível entrar. Tente novamente.');
+      setMessage(loginErrorMessage(error));
     } finally { setLoading(false); }
   }
 
@@ -130,16 +143,16 @@ export default function LoginScreen() {
                 <View style={s.field}><Text style={s.label}>Senha</Text><View style={s.passwordRow}><TextInput accessibilityLabel="Senha" style={s.passwordInput} placeholder={signup ? 'Mínimo de 6 caracteres' : 'Sua senha'} placeholderTextColor="#91A0B1" value={password} onChangeText={setPassword} secureTextEntry={!visible} autoCapitalize="none" autoCorrect={false} autoComplete={signup ? 'new-password' : 'current-password'} editable={!loading} onSubmitEditing={submit} returnKeyType="done" /><Pressable accessibilityRole="button" accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'} onPress={() => setVisible(value => !value)} style={s.eye}><MaterialIcons name={visible ? 'visibility-off' : 'visibility'} size={19} color="#8190A3" /></Pressable></View></View>
                 <View style={s.options}>
                   <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: signup ? accepted : remember }} onPress={() => signup ? setAccepted(value => !value) : setRemember(value => !value)} style={s.checkboxRow} disabled={loading}><MaterialIcons name={(signup ? accepted : remember) ? 'check-box' : 'check-box-outline-blank'} size={23} color={blue} /><Text style={s.optionText}>{signup ? 'Quero criar uma conta no SpecRadar' : 'Lembrar de mim'}</Text></Pressable>
-                  {!signup && <Pressable accessibilityRole="button" onPress={() => setMessage('A recuperação de senha ainda não está disponível. Use as credenciais de demonstração do admin.')} style={s.forgot}><Text style={s.link}>Esqueci a senha</Text></Pressable>}
+                  {!signup && <Pressable accessibilityRole="button" onPress={() => setMessage(API_CONFIGURED ? 'A recuperação de senha ainda não está disponível. Fale com um administrador do SpecRadar.' : 'A recuperação de senha ainda não está disponível. Use as credenciais de demonstração do admin.')} style={s.forgot}><Text style={s.link}>Esqueci a senha</Text></Pressable>}
                 </View>
                 {!!message && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s.message}>{message}</Text>}
                 <Pressable accessibilityRole="button" accessibilityState={{ disabled: loading }} disabled={loading} onPress={submit} style={[s.submit, loading && { opacity: 0.6 }]}>{loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitText}>{signup ? 'Sign up' : 'Sign in'}</Text>}</Pressable>
                 <View style={s.divider}><View style={s.line} /><Text style={s.dividerText}>{signup ? 'ou cadastre-se com' : 'ou entre com'}</Text><View style={s.line} /></View>
                 <View style={s.socials}>
-                  {([{ provider: 'Facebook', icon: 'facebook-official', color: '#1877F2' }, { provider: 'Google', icon: 'google', color: '#4285F4' }, { provider: 'Apple', icon: 'apple', color: '#111827' }] as const).map(provider => <Pressable key={provider.provider} accessibilityRole="button" accessibilityLabel={`Continuar com ${provider.provider}`} disabled={loading} onPress={() => setMessage(`O acesso com ${provider.provider} ainda não está habilitado. Por enquanto, entre com a conta admin.`)} style={({ pressed }) => [s.social, pressed && { opacity: 0.5 }]}><>{provider.provider === 'Google' ? <Image source={require('@/assets/google.png')} style={{ width: 26, height: 26 }} resizeMode="contain" /> : <FontAwesome name={provider.icon} size={26} color={provider.color} />}</></Pressable>)}
+                  {([{ provider: 'Facebook', icon: 'facebook-official', color: '#1877F2' }, { provider: 'Google', icon: 'google', color: '#4285F4' }, { provider: 'Apple', icon: 'apple', color: '#111827' }] as const).map(provider => <Pressable key={provider.provider} accessibilityRole="button" accessibilityLabel={`Continuar com ${provider.provider}`} disabled={loading} onPress={() => setMessage(`O acesso com ${provider.provider} ainda não está habilitado. Por enquanto, entre com ${API_CONFIGURED ? 'e-mail e senha' : 'a conta admin'}.`)} style={({ pressed }) => [s.social, pressed && { opacity: 0.5 }]}><>{provider.provider === 'Google' ? <Image source={require('@/assets/google.png')} style={{ width: 26, height: 26 }} resizeMode="contain" /> : <FontAwesome name={provider.icon} size={26} color={provider.color} />}</></Pressable>)}
                 </View>
                 <Pressable accessibilityRole="button" disabled={loading} onPress={() => open(signup ? 'signin' : 'signup')} style={s.switch}><Text style={s.switchText}>{signup ? 'Já tem uma conta? ' : 'Ainda não tem conta? '}<Text style={s.link}>{signup ? 'Sign in' : 'Sign up'}</Text></Text></Pressable>
-                {!signup && <Text selectable style={s.demo}>Demo: admin@spec.com · 123456</Text>}
+                {!signup && !API_CONFIGURED && <Text selectable style={s.demo}>Demo: admin@spec.com · 123456</Text>}
               </ScrollView>
             </Animated.View>
           </KeyboardAvoidingView>
