@@ -1,29 +1,10 @@
-export type Confidence = 'alta' | 'inferida' | 'nao_encontrado';
+import type { CampoSpec, SpecResponse as ApiSpecResponse } from '@/src/types/api';
 
-export interface SpecField {
-  valor: string | number | null;
-  confianca: Confidence;
-  fonte: string | null;
-  verificado_em: string | null;
-}
-
-export interface SpecQuery {
-  marca: string;
-  modelo: string;
-  versao?: string;
-  atributos: string[];
-}
-
-export interface SpecResponse {
+/**
+ * Ficha como o app usa: a resposta da API mais um id local e os campos
+ * indexados por nome. Montada por toFicha (src/api/adapters.ts).
+ */
+export interface Ficha extends ApiSpecResponse {
   id: string;
-  marca: string;
-  modelo: string;
-  versao: string;
-  consultado_em: string;
-  atributos: Record<string, SpecField>;
-}
-
-export interface ApiError {
-  status: number;
-  message: string;
+  atributos: Record<string, CampoSpec>;
 }

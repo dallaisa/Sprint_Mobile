@@ -1,0 +1,11 @@
+# Arquivos que o build remoto do EAS não precisa (ele reinstala node_modules e
+# regenera as pastas nativas sozinho). Reduz o tamanho e o tempo do upload.
+node_modules
+android
+ios
+.git
+.expo
+.claude
+docs
+*.apk
+*.aab

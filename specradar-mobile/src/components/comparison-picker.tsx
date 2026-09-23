@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { querySpec } from '@/src/api/client';
+import { querySpec } from '@/src/api/specs';
+import { sendChatMessage } from '@/src/api/chat';
+import { API_CONFIGURED, ApiError } from '@/src/api/http';
+import { MODELO_REGEX, VERSAO_PADRAO } from '@/src/api/validacao';
 import { saveToHistory } from '@/src/storage/history';
-import { ATRIBUTOS_PADRAO, Colors } from '@/src/theme/colors';
-import type { SpecResponse } from '@/src/types/spec';
+import { Colors } from '@/src/theme/colors';
+import { ATRIBUTOS_PADRAO } from '@/src/data/atributos';
+import type { Ficha } from '@/src/types/spec';
 import { VEHICLES } from '@/src/data/vehicles';
 import { PageIntro, ui } from './radar-ui';
 
@@ -20,7 +24,19 @@ export const COMPARISON_OPTIONS = [
   { brand: 'Chevrolet', model: 'S10', category: 'Picapes', image: require('../../assets/s10.jpeg') as number },
 ];
 
-export function ComparisonPicker({ onCompare }: { onCompare: (first: SpecResponse, second: SpecResponse) => void }) {
+/** Garante a ficha salva na API antes do /specs/compare, que exige os dois carros no banco. */
+async function fichaParaComparar(vehicle: (typeof COMPARISON_OPTIONS)[number]): Promise<Ficha> {
+  if (MODELO_REGEX.test(vehicle.model)) {
+    return querySpec({ marca: vehicle.brand, modelo: vehicle.model, versao: VERSAO_PADRAO, atributos: ATRIBUTOS_PADRAO });
+  }
+  // A consulta recusa modelo com número (ex.: S10). O chat da API não tem essa
+  // validação e salva a ficha, que o compare aceita.
+  const reply = await sendChatMessage(`${vehicle.brand} ${vehicle.model}`);
+  if (!reply.ficha) throw new Error(`Não foi possível buscar a ficha da ${vehicle.brand} ${vehicle.model}. ${reply.mensagem}`);
+  return reply.ficha;
+}
+
+export function ComparisonPicker({ onCompare }: { onCompare: (first: Ficha, second: Ficha) => void }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,13 +54,14 @@ export function ComparisonPicker({ onCompare }: { onCompare: (first: SpecRespons
     setError('');
     try {
       const chosen = selected.map(key => COMPARISON_OPTIONS.find(vehicle => `${vehicle.brand} ${vehicle.model}` === key)!);
-      const [first, second] = await Promise.all(chosen.map(vehicle => querySpec({ marca: vehicle.brand, modelo: vehicle.model, atributos: ATRIBUTOS_PADRAO })));
+      const [first, second] = await Promise.all(chosen.map(fichaParaComparar));
       if (!mounted.current) return;
       await saveToHistory(first);
       await saveToHistory(second);
       if (mounted.current) onCompare(first, second);
     } catch (failure) {
-      if (mounted.current) setError(failure instanceof Error ? failure.message : 'Não foi possível comparar. Tente novamente.');
+      const campo = failure instanceof ApiError ? Object.values(failure.camposInvalidos)[0] : undefined;
+      if (mounted.current) setError(campo ?? (failure instanceof Error ? failure.message : 'Não foi possível comparar. Tente novamente.'));
     } finally {
       pending.current = false;
       if (mounted.current) setLoading(false);
@@ -56,7 +73,7 @@ export function ComparisonPicker({ onCompare }: { onCompare: (first: SpecRespons
     <View style={s.search}><MaterialIcons name="search" size={20} color={Colors.fordBlue} /><TextInput accessibilityLabel="Buscar carros para comparar" value={search} onChangeText={setSearch} placeholder="Marca, modelo ou categoria" style={s.input} editable={!loading} /></View>
     <View style={s.selection}>{selected.length ? selected.map((key, index) => <Pressable key={key} accessibilityRole="button" accessibilityLabel={`Remover ${key}`} disabled={loading} onPress={() => setSelected(current => current.filter(item => item !== key))} style={s.chip}><Text style={s.chipText}>{index + 1}. {key} ×</Text></Pressable>) : <Text style={ui.description}>Nenhum carro selecionado</Text>}</View>
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: selected.length !== 2 || loading }} disabled={selected.length !== 2 || loading} onPress={compare} style={[ui.button, (selected.length !== 2 || loading) && { opacity: 0.45 }]}>{loading ? <ActivityIndicator color="#fff" /> : <Text style={ui.buttonText}>Comparar selecionados · {selected.length}/2</Text>}</Pressable>
-    {!process.env.EXPO_PUBLIC_API_BASE_URL && <Text style={s.note}>Modo demonstração: os valores retornados usam a ficha de exemplo da Ranger Raptor, não as especificações reais de cada modelo.</Text>}
+    {!API_CONFIGURED && <Text style={s.note}>Modo demonstração: os valores retornados usam a ficha de exemplo da Ranger Raptor, não as especificações reais de cada modelo.</Text>}
     {!!error && <Text accessibilityRole="alert" style={s.error}>{error}</Text>}
     <View style={s.grid}>{options.map(vehicle => {
       const key = `${vehicle.brand} ${vehicle.model}`;

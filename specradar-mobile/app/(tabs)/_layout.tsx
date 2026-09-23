@@ -1,8 +1,9 @@
+import { pageEntranceLayout } from '@/src/components/page-entrance';
 import { Tabs, useRouter } from 'expo-router';
 import { Image, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/src/theme/colors';
-import { clearToken } from '@/src/storage/auth';
+import { signOut } from '@/src/api/auth';
 import { HomeBackground } from '@/src/components/screen-background';
 
 const tabIcons = {
@@ -31,13 +32,14 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
 
   async function handleLogout() {
-    await clearToken();
+    await signOut();
     router.replace('/login');
   }
 
   return (
     <Tabs
       initialRouteName="home"
+      screenLayout={pageEntranceLayout}
       screenOptions={{
         headerRight: () => (
           <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
@@ -47,12 +49,14 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors.fordBlue,
         tabBarInactiveTintColor: Colors.textSecondary,
         tabBarStyle: {
+          position: 'absolute',
+          left: 10,
+          right: 10,
+          bottom: Math.max(insets.bottom, 8),
           backgroundColor: Colors.surface,
           borderTopWidth: 0,
-          borderRadius: 30,
-          marginHorizontal: 10,
-          marginBottom: Math.max(insets.bottom, 8),
-          boxShadow: '0 4px 18px rgba(22, 54, 90, 0.14)',
+          borderRadius: 37,
+          boxShadow: '0 4px 9px rgba(22, 54, 90, 0.14)',
           paddingTop: 10,
           paddingBottom: 10,
           height: 74,
