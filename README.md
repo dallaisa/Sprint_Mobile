@@ -120,6 +120,17 @@ Para ativar a API real, crie um arquivo `.env` em `specradar-mobile/`:
 EXPO_PUBLIC_API_BASE_URL=https://sua-api.exemplo.com
 ```
 
+### APK Android de demonstração
+
+O perfil EAS `preview` gera um APK instalável e mantém `EXPO_PUBLIC_API_BASE_URL` vazio, usando o login e os dados demonstrativos locais. Para gerar o APK, entre na sua conta Expo e inicie o build dentro de `specradar-mobile/`:
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest build --platform android --profile preview
+```
+
+Use `admin@spec.com` e `123456` para entrar no modo demonstração. O APK gerado fica disponível no link informado pelo EAS ao final do build. O perfil `production` gera um Android App Bundle para publicação, não um APK de instalação direta.
+
 ---
 
 ## Funcionalidades implementadas
