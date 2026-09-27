@@ -117,7 +117,7 @@ O toggle é automático via variável de ambiente:
 Para ativar a API real, crie um arquivo `.env` em `specradar-mobile/`:
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=https://sua-api.exemplo.com
+https://expo.dev/artifacts/eas/3Vc1gx197_l2ONUV2OB6Kaxv_QD0xEscsvQTrBZsZRU.apk
 ```
 
 ### APK Android de demonstração
