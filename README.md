@@ -125,10 +125,12 @@ Para Ver o APK funcionando, acesse o google drive:
 ```env
 https://drive.google.com/file/d/1_H6Ja0sgmeUuOlcmeaLG-5FLjjHsGrzj/view?usp=drive_link
 ```
+Caso o link do APK não esteja funcionando, acesse pelo GIT Release e baixe o APP:
 
-### APK Android de demonstração
+```env
+https://github.com/dallaisa/Sprint_Mobile/releases/tag/v1.0.0
+```
 
-O perfil EAS `preview` gera um APK instalável e mantém `EXPO_PUBLIC_API_BASE_URL` vazio, usando o login e os dados demonstrativos locais. Para gerar o APK, entre na sua conta Expo e inicie o build dentro de `specradar-mobile/`:
 
 ```bash
 npx eas-cli@latest login
