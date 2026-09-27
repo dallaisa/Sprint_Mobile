@@ -117,7 +117,7 @@ O toggle é automático via variável de ambiente:
 Para ativar a API real, crie um arquivo `.env` em `specradar-mobile/`:
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=https://sua-api.exemplo.com
+https://expo.dev/artifacts/eas/3Vc1gx197_l2ONUV2OB6Kaxv_QD0xEscsvQTrBZsZRU.apk
 ```
 
 ### APK Android de demonstração
@@ -129,7 +129,7 @@ npx eas-cli@latest login
 npx eas-cli@latest build --platform android --profile preview
 ```
 
-Use `admin@spec.com` e `123456` para entrar no modo demonstração. O APK gerado fica disponível no link informado pelo EAS ao final do build. O perfil `production` gera um Android App Bundle para publicação, não um APK de instalação direta.
+Contas de demonstração (senha `123456`): `admin@spec.com`, `analista@spec.com` e `usuario@spec.com`. O APK gerado fica disponível no link informado pelo EAS ao final do build. O perfil `production` gera um Android App Bundle para publicação, não um APK de instalação direta.
 
 ---
 

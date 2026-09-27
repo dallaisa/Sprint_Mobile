@@ -2,6 +2,8 @@ import { TokenResponse } from '@/src/types/auth';
 
 const USUARIOS_MOCK = [
   { email: 'admin@spec.com', senha: '123456', nome: 'Admin Usuário', role: 'ADMIN' },
+  { email: 'analista@spec.com', senha: '123456', nome: 'Analista Demo', role: 'ANALISTA' },
+  { email: 'usuario@spec.com', senha: '123456', nome: 'Usuário Demo', role: 'USUARIO' },
 ];
 
 const registeredEmails = new Set(USUARIOS_MOCK.map((u) => u.email));
