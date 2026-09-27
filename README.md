@@ -1,4 +1,4 @@
-# SpecRadar — Challenge Ford / FIAP
+# SpecRadar — Challenge Ford / FIAP - TOP 10 MELHORES GRUPOS
 
 Plataforma de inteligência competitiva automotiva desenvolvida para o Challenge Ford da FIAP. O analista consulta um veículo concorrente via chat livre ou formulário estruturado e recebe uma ficha técnica padronizada em menos de 10 segundos, com _confidence score_ por campo, fonte e data de verificação.
 
