@@ -90,7 +90,6 @@ export default function LoginScreen() {
     setLoading(true);
     setMessage('');
     try {
-      if (normalizedEmail !== 'admin@spec.com') throw new Error('Por enquanto, o acesso está disponível somente para o admin.');
       const result = await loginUser(normalizedEmail, password);
       await saveToken(result.token, result.expiraEm, remember);
       router.replace('/(tabs)/home');
@@ -130,7 +129,7 @@ export default function LoginScreen() {
                 <View style={s.field}><Text style={s.label}>Senha</Text><View style={s.passwordRow}><TextInput accessibilityLabel="Senha" style={s.passwordInput} placeholder={signup ? 'Mínimo de 6 caracteres' : 'Sua senha'} placeholderTextColor="#91A0B1" value={password} onChangeText={setPassword} secureTextEntry={!visible} autoCapitalize="none" autoCorrect={false} autoComplete={signup ? 'new-password' : 'current-password'} editable={!loading} onSubmitEditing={submit} returnKeyType="done" /><Pressable accessibilityRole="button" accessibilityLabel={visible ? 'Ocultar senha' : 'Mostrar senha'} onPress={() => setVisible(value => !value)} style={s.eye}><MaterialIcons name={visible ? 'visibility-off' : 'visibility'} size={19} color="#8190A3" /></Pressable></View></View>
                 <View style={s.options}>
                   <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: signup ? accepted : remember }} onPress={() => signup ? setAccepted(value => !value) : setRemember(value => !value)} style={s.checkboxRow} disabled={loading}><MaterialIcons name={(signup ? accepted : remember) ? 'check-box' : 'check-box-outline-blank'} size={23} color={blue} /><Text style={s.optionText}>{signup ? 'Quero criar uma conta no SpecRadar' : 'Lembrar de mim'}</Text></Pressable>
-                  {!signup && <Pressable accessibilityRole="button" onPress={() => setMessage('A recuperação de senha ainda não está disponível. Use as credenciais de demonstração do admin.')} style={s.forgot}><Text style={s.link}>Esqueci a senha</Text></Pressable>}
+                  {!signup && <Pressable accessibilityRole="button" onPress={() => setMessage('A recuperação de senha ainda não está disponível. Use uma das contas de demonstração abaixo.')} style={s.forgot}><Text style={s.link}>Esqueci a senha</Text></Pressable>}
                 </View>
                 {!!message && <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s.message}>{message}</Text>}
                 <Pressable accessibilityRole="button" accessibilityState={{ disabled: loading }} disabled={loading} onPress={submit} style={[s.submit, loading && { opacity: 0.6 }]}>{loading ? <ActivityIndicator color="#fff" /> : <Text style={s.submitText}>{signup ? 'Sign up' : 'Sign in'}</Text>}</Pressable>
@@ -139,7 +138,7 @@ export default function LoginScreen() {
                   {([{ provider: 'Facebook', icon: 'facebook-official', color: '#1877F2' }, { provider: 'Google', icon: 'google', color: '#4285F4' }, { provider: 'Apple', icon: 'apple', color: '#111827' }] as const).map(provider => <Pressable key={provider.provider} accessibilityRole="button" accessibilityLabel={`Continuar com ${provider.provider}`} disabled={loading} onPress={() => setMessage(`O acesso com ${provider.provider} ainda não está habilitado. Por enquanto, entre com a conta admin.`)} style={({ pressed }) => [s.social, pressed && { opacity: 0.5 }]}><>{provider.provider === 'Google' ? <Image source={require('@/assets/google.png')} style={{ width: 26, height: 26 }} resizeMode="contain" /> : <FontAwesome name={provider.icon} size={26} color={provider.color} />}</></Pressable>)}
                 </View>
                 <Pressable accessibilityRole="button" disabled={loading} onPress={() => open(signup ? 'signin' : 'signup')} style={s.switch}><Text style={s.switchText}>{signup ? 'Já tem uma conta? ' : 'Ainda não tem conta? '}<Text style={s.link}>{signup ? 'Sign in' : 'Sign up'}</Text></Text></Pressable>
-                {!signup && <Text selectable style={s.demo}>Demo: admin@spec.com · 123456</Text>}
+                {!signup && <Text selectable style={s.demo}>Demonstração · senha: 123456{'\n'}Admin: admin@spec.com · Analista: analista@spec.com{'\n'}Usuário: usuario@spec.com</Text>}
               </ScrollView>
             </Animated.View>
           </KeyboardAvoidingView>

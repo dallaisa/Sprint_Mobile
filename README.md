@@ -129,7 +129,7 @@ npx eas-cli@latest login
 npx eas-cli@latest build --platform android --profile preview
 ```
 
-Use `admin@spec.com` e `123456` para entrar no modo demonstração. O APK gerado fica disponível no link informado pelo EAS ao final do build. O perfil `production` gera um Android App Bundle para publicação, não um APK de instalação direta.
+Contas de demonstração (senha `123456`): `admin@spec.com`, `analista@spec.com` e `usuario@spec.com`. O APK gerado fica disponível no link informado pelo EAS ao final do build. O perfil `production` gera um Android App Bundle para publicação, não um APK de instalação direta.
 
 ---
 
